@@ -2,6 +2,7 @@
 #include <QTabBar>
 #include <QVBoxLayout>
 #include "hgridctrlwidget.h"
+#include "hgridctrlhelper.h"
 HGridReportWidget::HGridReportWidget(QWidget *parent)
 {
     setNumSheet(0);
@@ -30,7 +31,7 @@ void HGridReportWidget::initGridReportWidget()
 
 void HGridReportWidget::updateGridReportWidget()
 {
-    int nAddCount = m_tabWidget->count() - m_nNumSheets;
+    int nAddCount = m_nNumSheets - m_tabWidget->count();
     if(nAddCount < 0)
     {
         while (m_tabWidget->count() > m_nNumSheets) {
@@ -51,7 +52,10 @@ void HGridReportWidget::updateGridReportWidget()
             HGridCtrlWidget* w = new HGridCtrlWidget(m_tabWidget);
             //要把表格模板拷贝到每个页面
             w->initReportWidget(m_uGridReportType);
-            w->setGridCtrlItem(NULL);
+            HGridCtrlInfo* pInfo = new HGridCtrlInfo;
+            pInfo->m_GridCtrlItem.nMaxCol = 10;
+            pInfo->m_GridCtrlItem.nMaxRow = 20;
+            w->setGridCtrlItem(pInfo);
             QString str = QString("第%1页").arg(i);
             m_tabWidget->insertTab(i,w,str);
         }

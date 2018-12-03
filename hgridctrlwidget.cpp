@@ -31,6 +31,7 @@ void HGridCtrlWidget::initReportWidget(quint8 type)
         hBoxLayout->addWidget(m_rowColLabel);
 
         m_inputLineEdit = new QLineEdit(this);
+        m_inputLineEdit->setFont(font);
         m_inputLineEdit->setObjectName(QStringLiteral("lineEdit"));
 
         hBoxLayout->addWidget(m_inputLineEdit);
