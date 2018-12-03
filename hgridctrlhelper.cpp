@@ -167,10 +167,11 @@ HGridCtrlInfo* HGridCtrlFile::addGridCtrlInfo(GC_ITEM* pItem)
 {
     if(NULL == pItem)
         return NULL;
-    bool bok = findGridCtrlInfo(pItem->wReportID);
-    if(bok) return getGridCtrlInfoById(pItem->wReportID);
+    quint16 reportID = 0;
+    while(findGridCtrlInfo(reportID))
+        reportID++;
     HGridCtrlInfo* pInfo = new HGridCtrlInfo;
-    pInfo->m_GridCtrlItem.wReportID = pItem->wReportID;
+    pInfo->m_GridCtrlItem.wReportID = reportID;
     pInfo->m_GridCtrlItem.nMaxCol = pItem->nMaxCol;
     pInfo->m_GridCtrlItem.nMaxRow = pItem->nMaxRow;
     pInfo->m_GridCtrlItem.btType = pItem->btType;
@@ -205,7 +206,6 @@ bool HGridCtrlFile::findGridCtrlInfo(int id)
     }
     return false;
 }
-
 
 //通过模板ID来获取对应的表格控件信息
 HGridCtrlInfo*  HGridCtrlFile::getGridCtrlInfoById(int id)
