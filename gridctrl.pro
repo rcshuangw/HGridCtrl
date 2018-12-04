@@ -18,10 +18,7 @@ INCLUDEPATH += \
 SOURCES +=  hgridcellbase.cpp \
             hgridcell.cpp   \
             hgridctrl.cpp \
-            hinplaceedit.cpp \
-    hgridreport.cpp \
-    hgridctrlhelper.cpp \
-    hgridctrlwidget.cpp
+            hinplaceedit.cpp
             #main.cpp
 
 HEADERS  +=    \
@@ -31,10 +28,7 @@ HEADERS  +=    \
             ../include/hgridcell.h     \
             ../include/hinplaceedit.h  \
             ../include/hgridctrl.h \
-            ../include/hgridglobal.h \
-            ../include/hgridreport.h \
-    ../include/hgridctrlhelper.h \
-    ../include/hgridctrlwidget.h
+            ../include/hgridglobal.h
 
 
 

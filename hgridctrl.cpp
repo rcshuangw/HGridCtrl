@@ -6575,7 +6575,7 @@ void HGridCtrl::OnLButtonUp(UINT nFlags, CPoint point)
         CGridCellBase* pCell = GetCell(m_idCurrentCell.row, m_idCurrentCell.col);
         if (pCell)
             pCell->OnClick( pointClicked( m_idCurrentCell.row, m_idCurrentCell.col, point) );
-        SendMessageToParent(m_LeftClickDownCell.row, m_LeftClickDownCell.col, NM_CLICK);
+        SendMessageToParent(m_LeftClickDownCell.row, m_LeftClickDownCell.col, NM_clicked);
 	    SendMessageToParent(m_LeftClickDownCell.row, m_LeftClickDownCell.col, GVN_SELCHANGING);
         resetSelectedRange();
 	    SendMessageToParent(m_idCurrentCell.row, m_idCurrentCell.col, GVN_SELCHANGED);
@@ -6652,7 +6652,7 @@ void HGridCtrl::OnLButtonUp(UINT nFlags, CPoint point)
         CGridCellBase* pCell = GetCell(m_idCurrentCell.row, m_idCurrentCell.col);
         if (pCell)
             pCell->OnClick( pointClicked( m_idCurrentCell.row, m_idCurrentCell.col, point) );
-        SendMessageToParent(m_LeftClickDownCell.row, m_LeftClickDownCell.col, NM_CLICK);
+        SendMessageToParent(m_LeftClickDownCell.row, m_LeftClickDownCell.col, NM_clicked);
     }
     
     m_MouseMode = MOUSE_NOTHING;
@@ -6666,7 +6666,7 @@ void HGridCtrl::OnLButtonUp(UINT nFlags, CPoint point)
     
     CWnd *pOwner = GetOwner();
     if (pOwner && IsWindow(pOwner->m_hWnd))
-        pOwner->PostMessage(WM_COMMAND, MAKELONG(GetDlgCtrlID(), BN_CLICKED),
+        pOwner->PostMessage(WM_COMMAND, MAKELONG(GetDlgCtrlID(), BN_clicked),
         (LPARAM) GetSafeHwnd());
 }
 
