@@ -572,8 +572,7 @@ void HGridCtrl::keyReleaseEvent(QKeyEvent *event)
     bool bChangeLine = false;
     bool bHorzScrollAction = false;
     bool bVertScrollAction = false;
-
-    if (Qt::CTRL == event->modifiers())
+    if (Qt::ControlModifier == event->modifiers())
     {
         switch (event->key())
         {
@@ -638,7 +637,7 @@ void HGridCtrl::keyReleaseEvent(QKeyEvent *event)
         if( !bFoundVisible)
             next.row = iOrig;
     }
-    else if (event->key() == Qt::Key_Right || (event->key() == Qt::Key_Tab && !(Qt::SHIFT == event->modifiers())) )
+    else if (event->key() == Qt::Key_Right || (event->key() == Qt::Key_Tab && !(Qt::ShiftModifier == event->modifiers())) )
     {
         // don't let user go to a hidden column
         bFoundVisible = false;
@@ -683,7 +682,7 @@ void HGridCtrl::keyReleaseEvent(QKeyEvent *event)
         if( !bFoundVisible)
             next.col = iOrig;
     }
-    else if (Qt::Key_Left == event->key() || (event->key() == Qt::Key_Tab && (Qt::SHIFT == event->modifiers())) )
+    else if (Qt::Key_Left == event->key() || (event->key() == Qt::Key_Tab && (Qt::ShiftModifier == event->modifiers())) )
     {
         // don't let user go to a hidden column
         bFoundVisible = false;
@@ -887,7 +886,7 @@ void HGridCtrl::keyReleaseEvent(QKeyEvent *event)
                 break;                
                 
             case Qt::Key_Tab:
-                if (Qt::SHIFT == event->modifiers())
+                if (Qt::ShiftModifier == event->modifiers())
                 {
                     if (bChangeLine) 
                     {
@@ -2385,6 +2384,7 @@ bool HGridCtrl::OnDrop(COleDataObject* pDataObject, DROPEFFECT dropEffect,
 #ifndef QT_NO_CLIPBOARD
 void HGridCtrl::onEditCut()
 {
+    return;
     if (!isEditable())
         return;
     QString strCopy = copyTextFromGrid();
