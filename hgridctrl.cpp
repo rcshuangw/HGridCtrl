@@ -6714,7 +6714,8 @@ void HGridCtrl::OnRButtonUp(UINT nFlags, CPoint point)
 }
 #endif
 
-#if !defined(_WIN32_WCE_NO_PRINTING) && !defined(GRIDCONTROL_NO_PRINTING)
+*/
+
 /////////////////////////////////////////////////////////////////////////////
 // CGridCtrl printing
 
@@ -6742,7 +6743,7 @@ void HGridCtrl::setPrintMarginInfo(int nHeaderHeight, int nFooterHeight,
 }
 
 //ok
-void HGridCtrl::getPrintMarginInfo(int &nHeaderHeight, int &nFooterHeight,
+void HGridCtrl::printMarginInfo(int &nHeaderHeight, int &nFooterHeight,
     int &nLeftMargin, int &nRightMargin, int &nTopMargin,
     int &nBottomMargin, int &nGap)
 {
@@ -6755,6 +6756,7 @@ void HGridCtrl::getPrintMarginInfo(int &nHeaderHeight, int &nFooterHeight,
     nGap = m_nGap;
 }
 
+/*
 void HGridCtrl::Print(CPrintDialog* pPrntDialog =NULL)
 {
     CDC dc;
@@ -6814,7 +6816,7 @@ void HGridCtrl::Print(CPrintDialog* pPrntDialog =NULL)
 
     dc.Detach();                                // detach the printer DC
 }
-
+*/
 /////////////////////////////////////////////////////////////////////////////
 // CGridCtrl printing overridables - for Doc/View print/print preview framework
 
