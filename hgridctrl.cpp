@@ -6822,6 +6822,7 @@ void HGridCtrl::Print(CPrintDialog* pPrntDialog =NULL)
 
 // EFW - Various changes in the next few functions to support the
 // new print margins and a few other adjustments.
+/*
 void HGridCtrl::OnBeginPrinting(CDC *pDC, CPrintInfo *pInfo)
 {
     // OnBeginPrinting() is called after the user has committed to
