@@ -552,7 +552,7 @@ bool HGridCellBase::validateEdit(QString& str)
     return true;
 }
 
-    // EFW - Added to print cells properly
+//表格绘制都用行列方式
 bool HGridCellBase::printCell(QPainter* pDC, int nRow, int nCol, QRect& rect)
 {
     //Used for merge cells
@@ -562,12 +562,12 @@ bool HGridCellBase::printCell(QPainter* pDC, int nRow, int nCol, QRect& rect)
         return TRUE;
     }*/
 
-    QColor crFG, crBG;
+   /* QColor crFG, crBG;
     GV_ITEM Item;
 
     HGridCtrl* pGrid = grid();
     if (!pGrid || !pDC)
-        return FALSE;
+        return false;
 
     if( rect.width() <= 0 || rect.height() <= 0)  // prevents imagelist item from drawing even
         return false;           //  though cell is hidden
@@ -580,6 +580,9 @@ bool HGridCellBase::printCell(QPainter* pDC, int nRow, int nCol, QRect& rect)
     pDC->Rectangle(rect);
     rect.DeflateRect(1,1);
 
+
+    crBG = QColor(QCLR_DEFAULT);
+    crFG = QColor(0, 0, 0);
     //带阴影绘制表格
     if (pGrid->GetShadedPrintOut())
     {
@@ -682,7 +685,7 @@ bool HGridCellBase::printCell(QPainter* pDC, int nRow, int nCol, QRect& rect)
 
     pDC->drawText(rect,format() | QDT_NOPREFIX,text());
 
-    pDC->restore;
+    pDC->restore();*/
 
     return true;
 }
