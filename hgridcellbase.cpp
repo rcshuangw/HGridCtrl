@@ -26,11 +26,10 @@ void HGridCellBase::operator=( HGridCellBase& cell)
     setFont(cell.font());
     setMargin(cell.margin());
 
-    /*
-    SetMergeCellID(cell.GetMergeCellID());
-    SetMergeRange(cell.GetMergeRange());
-    Show(cell.IsShow());
-    */
+    setMergeCellID(cell.mergeCellID());
+    setMergeRange(cell.mergeRange());
+    setShow(cell.isShow());
+
 }
 
 HGridCellBase* HGridCellBase::defaultCell() const
@@ -43,6 +42,11 @@ HGridCellBase* HGridCellBase::defaultCell() const
 void HGridCellBase::reset()
 {
     m_nState  = 0;
+    m_bShow = true;
+    m_MergeCellID.row = -1;
+    m_MergeCellID.col = -1;
+    m_bMergeWithOthers = false;
+    m_MergeRange.set();
 }
 
 /*
@@ -293,11 +297,9 @@ bool HGridCellBase::draw(QPainter* painter, int nRow, int nCol, QRect rect, bool
     // Note - all through this function we totally brutalise 'rect'. Do not
         // depend on it's value being that which was passed in.
 
-    //Used for merge cells
-    /*if(	m_Hide && !IsMerged())
-    {
-        return TRUE;
-    }*/
+    //有合并同时不显示此单元格
+    if(	!isShow() && !isMerged())
+        return true;
 
     HGridCtrl* pGrid = grid();
     Q_ASSERT(pGrid);
@@ -735,3 +737,56 @@ bool HGridCellBase::onSetCursor()
     return false;
 }
 
+//如果是合并单元格 此单元格不必再绘制
+void HGridCellBase::setShow(bool b)
+{
+    m_bShow = b;
+}
+
+bool HGridCellBase::isShow()
+{
+    return m_bShow;
+}
+
+bool HGridCellBase::isMerged()
+{
+    return m_MergeRange.count() > 0;
+}
+
+void HGridCellBase::setMergeRange(HCellRange range)
+{
+    m_MergeRange = range;
+}
+
+HCellRange HGridCellBase::mergeRange()
+{
+    return m_MergeRange;
+}
+
+bool HGridCellBase::isMergeWithOthers()
+{
+    return m_bMergeWithOthers;
+}
+
+HCellID HGridCellBase::mergeCellID()
+{
+    return m_MergeCellID;
+}
+
+void HGridCellBase::setMergeCellID(HCellID cell)
+{
+    m_MergeCellID = cell;
+    if(cell.row != -1)
+        m_bMergeWithOthers = true;
+    else
+        m_bMergeWithOthers = false;
+}
+
+void HGridCellBase::split()
+{
+    m_bShow = true;
+    m_MergeCellID.row = -1;
+    m_MergeCellID.col = -1;
+    m_bMergeWithOthers = false;
+    m_MergeRange.set();
+}

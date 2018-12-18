@@ -1333,39 +1333,36 @@ void HGridCtrl::onDraw(QPainter* painter)
             pCell = getCell(row, col);
             if (pCell)
 			{
-                /*if(!pCell->IsMerged())
+                if(!pCell->isMerged())
 				{
-					if(!pCell->IsMergeWithOthers())
+                    if(!pCell->isMergeWithOthers())
 					{
-						pCell->SetCoords(row,col);
-                        pCell->Draw(pDC, row, col, rect, false);
+                        pCell->setCoords(row,col);
+                        pCell->draw(painter, row, col, rect, false);
 					}
 					else
 					{
-						CGridCellBase* pMergedCell=GetCell(pCell->GetMergeCellID());
-						CRect mergerect=rect;
-                        if(cellRangeRect(pMergedCell->m_MergeRange,&mergerect))
+                        HGridCellBase* pMergedCell = getCell(pCell->mergeCellID());
+                        QRect mergerect=rect;
+                        if(cellRangeRect(pMergedCell->mergeRange(),&mergerect))
 						{
 							mergerect.DeflateRect(0,0,1,1);
-							pMergedCell->SetCoords(pCell->GetMergeCellID().row,pCell->GetMergeCellID().col);
-                            pMergedCell->Draw(pDC, pCell->GetMergeCellID().row,pCell->GetMergeCellID().col, mergerect, true);
+                            pMergedCell->setCoords(pCell->mergeCellID().row,pCell->mergeCellID().col);
+                            pMergedCell->draw(painter, pCell->mergeCellID().row,pCell->mergeCellID().col, mergerect, true);
 						}
 					}
 				}
 				else
 				{
-					CRect mergerect=rect;
+                    QRect mergerect=rect;
 
-                    if(cellRangeRect(pCell->m_MergeRange,&mergerect))
+                    if(cellRangeRect(pCell->mergeRange(),&mergerect))
 					{
 						mergerect.DeflateRect(0,0,1,1);
-						pCell->SetCoords(row,col);
-                        pCell->Draw(pDC, row, col, mergerect, true);
+                        pCell->setCoords(row,col);
+                        pCell->draw(painter, row, col, mergerect, true);
 					}
-                }*/
-                //huangw
-                pCell->setCoords(row,col);
-                pCell->draw(painter, row, col, rect, false);
+                }
 			}
         }
     }
@@ -1373,251 +1370,116 @@ void HGridCtrl::onDraw(QPainter* painter)
     //注意：表头行列此处没有实现合并部分，有点类似excel
     // draw fixed column cells:  m_nFixedRows..n, 0..m_nFixedCols-1
     //3.绘制列表头部分
-    rect.setBottom(nFixedRowHeight-1);
-    for (row = minVisibleRow; row <= maxVisibleRow; row++)
+    if(m_bVerticalHeader)
     {
-        if (rowHeight(row) <= 0) continue;
-
-        rect.setTop(rect.bottom()+1);
-        rect.setBottom(rect.top() + rowHeight(row)-1);
-
-        //huangw
-        /*
-        // rect.bottom = bottom pixel of previous row
-        if (rect.top > clipRect.bottom)
-            break;                // Gone past cliprect
-        if (rect.bottom < clipRect.top)
-            continue;             // Reached cliprect yet?
-            */
-        rect.setRight(-1);
-        for (col = 0; col < m_nFixedCols; col++)
+        rect.setBottom(nFixedRowHeight-1);
+        for (row = minVisibleRow; row <= maxVisibleRow; row++)
         {
-            if (columnWidth(col) <= 0) continue;
+            if (rowHeight(row) <= 0) continue;
 
-            rect.setLeft(rect.right()+1);
-            rect.setRight(rect.left() + columnWidth(col)-1);
+            rect.setTop(rect.bottom()+1);
+            rect.setBottom(rect.top() + rowHeight(row)-1);
 
-            //huangw
-            /*
-            if (rect.left > clipRect.right)
-                break;            // gone past cliprect
-            if (rect.right < clipRect.left)
-                continue;         // Reached cliprect yet?
-                */
+            // rect.bottom = bottom pixel of previous row
+            if (rect.top() > clipRect.bottom())
+                break;                // Gone past cliprect
+            if (rect.bottom() < clipRect.top())
+                continue;             // Reached cliprect yet?
 
-            pCell = getCell(row, col);
-            if (pCell)
+            rect.setRight(-1);
+            for (col = 0; col < m_nFixedCols; col++)
             {
-                pCell->setCoords(row,col);
-                pCell->draw(painter, row, col, rect, false);
+                if (columnWidth(col) <= 0) continue;
+
+                rect.setLeft(rect.right()+1);
+                rect.setRight(rect.left() + columnWidth(col)-1);
+
+                if (rect.left() > clipRect.right())
+                    break;            // gone past cliprect
+                if (rect.right() < clipRect.left())
+                    continue;         // Reached cliprect yet?
+
+                //表格头不合并
+                pCell = getCell(row, col);
+                if (pCell)
+                {
+                    pCell->setCoords(row,col);
+                    pCell->draw(painter, row, col, rect, false);
+                }
             }
-            /* huangw
-            if (pCell)
-			{
-				//Used for merge cells
-				//by Huang Wei
-
-				if(!pCell->IsMerged())
-				{
-					if(!pCell->IsMergeWithOthers())
-					{
-						pCell->SetCoords(row,col);
-                        pCell->Draw(pDC, row, col, rect, false);
-					}
-					else
-					{
-						CGridCellBase* pMergedCell=GetCell(pCell->GetMergeCellID());
-						CRect mergerect=rect;
-                        if(cellRangeRect(pMergedCell->m_MergeRange,&mergerect))
-						{
-							mergerect.DeflateRect(0,0,1,1);
-							pMergedCell->SetCoords(pCell->GetMergeCellID().row,pCell->GetMergeCellID().col);
-                            pMergedCell->Draw(pDC, pCell->GetMergeCellID().row,pCell->GetMergeCellID().col, mergerect, true);
-						}
-					}
-				}
-				else
-				{
-					CRect mergerect=rect;
-
-                    if(cellRangeRect(pCell->m_MergeRange,&mergerect))
-					{
-						mergerect.DeflateRect(0,0,1,1);
-						pCell->SetCoords(row,col);
-                        pCell->Draw(pDC, row, col, mergerect, true);
-					}
-				}
-            }*/
         }
     }
 
     // draw fixed row cells  0..m_nFixedRows, m_nFixedCols..n
     //4.绘制行表头问题
-    rect.setBottom(-1);
-    for (row = 0; row < m_nFixedRows; row++)
+    if(m_bHorizontalHeader)
     {
-        if (rowHeight(row) <= 0) continue;
-
-        rect.setTop(rect.bottom()+1);
-        rect.setBottom(rect.top() + rowHeight(row)-1);
-
-        /* huangw
-        // rect.bottom = bottom pixel of previous row
-        if (rect.top > clipRect.bottom)
-            break;                // Gone past cliprect
-        if (rect.bottom < clipRect.top)
-            continue;             // Reached cliprect yet?
-            */
-
-        rect.setRight(nFixedColWidth-1);
-        for (col = minVisibleCol; col <= maxVisibleCol; col++)
+        rect.setBottom(-1);
+        for (row = 0; row < m_nFixedRows; row++)
         {
-            if (columnWidth(col) <= 0) continue;
+            if (rowHeight(row) <= 0) continue;
 
-            rect.setLeft(rect.right()+1);
-            rect.setRight(rect.left() + columnWidth(col)-1);
+            rect.setTop(rect.bottom()+1);
+            rect.setBottom(rect.top() + rowHeight(row)-1);
 
-            /* huangw
-            if (rect.left > clipRect.right)
-                break;        // gone past cliprect
-            if (rect.right < clipRect.left)
-                continue;     // Reached cliprect yet?
-                */
+            // rect.bottom = bottom pixel of previous row
+            if (rect.top() > clipRect.bottom())
+                break;                // Gone past cliprect
+            if (rect.bottom() < clipRect.top())
+                continue;             // Reached cliprect yet?
 
-            pCell = getCell(row, col);
-            if (pCell)
+            rect.setRight(nFixedColWidth-1);
+            for (col = minVisibleCol; col <= maxVisibleCol; col++)
             {
-                pCell->setCoords(row,col);
-                pCell->draw(painter, row, col, rect, false);
+                if (columnWidth(col) <= 0) continue;
+
+                rect.setLeft(rect.right()+1);
+                rect.setRight(rect.left() + columnWidth(col)-1);
+
+                if (rect.left() > clipRect.right())
+                    break;        // gone past cliprect
+                if (rect.right() < clipRect.left())
+                    continue;     // Reached cliprect yet?
+
+                //表头不合并
+                pCell = getCell(row, col);
+                if (pCell)
+                {
+                    pCell->setCoords(row,col);
+                    pCell->draw(painter, row, col, rect, false);
+                }
             }
-            /*
-            if (pCell)
-			{
-				//Used for merge cells
-				//by Huang Wei
-
-				if(!pCell->IsMerged())
-				{
-					if(!pCell->IsMergeWithOthers())
-					{
-						pCell->SetCoords(row,col);
-                        pCell->Draw(pDC, row, col, rect, false);
-					}
-					else
-					{
-						CGridCellBase* pMergedCell=GetCell(pCell->GetMergeCellID());
-						CRect mergerect=rect;
-                        if(cellRangeRect(pMergedCell->m_MergeRange,&mergerect))
-						{
-							mergerect.DeflateRect(0,0,1,1);
-							pMergedCell->SetCoords(pCell->GetMergeCellID().row,pCell->GetMergeCellID().col);
-                            pMergedCell->Draw(pDC, pCell->GetMergeCellID().row,pCell->GetMergeCellID().col, mergerect, true);
-						}
-					}
-				}
-				else
-				{
-					CRect mergerect=rect;
-
-                    if(cellRangeRect(pCell->m_MergeRange,&mergerect))
-					{
-						mergerect.DeflateRect(0,0,1,1);
-						pCell->SetCoords(row,col);
-                        pCell->Draw(pDC, row, col, mergerect, true);
-					}
-				}
-            }*/
         }
     }
-/*  already
-    // draw top-left cells 0..m_nFixedRows-1, 0..m_nFixedCols-1
-    rect.bottom = -1;
-    for (row = 0; row < m_nFixedRows; row++)
-    {
-        if (GetRowHeight(row) <= 0) continue;
-
-        rect.top = rect.bottom+1;
-        rect.bottom = rect.top + GetRowHeight(row)-1;
-        rect.right = -1;
-
-        for (col = 0; col < m_nFixedCols; col++)
-        {
-            if (GetColumnWidth(col) <= 0) continue;
-
-            rect.left = rect.right+1;
-            rect.right = rect.left + GetColumnWidth(col)-1;
-
-            pCell = GetCell(row, col);
-            if (pCell)
-			{
-				pCell->SetCoords(row,col);
-                pCell->Draw(pDC, row, col, rect, false);
-			}
-        }
-    }
-*/
 
 	// draw top-left cells 0..m_nFixedRows-1, 0..m_nFixedCols-1
-    rect.setBottom(-1);
-	for (row = 0; row < m_nFixedRows; row++)
-	{
-        if (rowHeight(row) <= 0) continue;
+    //只有行列头同时绘制的时候才绘制交叉位置
+    if(m_bHorizontalHeader && m_bVerticalHeader)
+    {
+        rect.setBottom(-1);
+        for (row = 0; row < m_nFixedRows; row++)
+        {
+            if (rowHeight(row) <= 0) continue;
 
-        rect.setTop(rect.bottom()+1);
-        rect.setBottom(rect.top() + rowHeight(row)-1);
-        rect.setRight(-1);
+            rect.setTop(rect.bottom()+1);
+            rect.setBottom(rect.top() + rowHeight(row)-1);
+            rect.setRight(-1);
 
-		for (col = 0; col < m_nFixedCols; col++)
-		{
-            if (columnWidth(col) <= 0) continue;
+            for (col = 0; col < m_nFixedCols; col++)
+            {
+                if (columnWidth(col) <= 0) continue;
 
-            rect.setLeft(rect.right()+1);
-            rect.setRight(rect.left() + columnWidth(col)-1);
+                rect.setLeft(rect.right()+1);
+                rect.setRight(rect.left() + columnWidth(col)-1);
 
-            pCell = getCell(row, col);
-            if (pCell)
-			{
-            pCell->setCoords(row,col);
-            pCell->draw(painter, row, col, rect, false);
-            }
-
-            /*if (pCell)
-			{
-				//Used for merge cells by Huang Wei
-				//bugfix by Luther Bruck
-
-				if(!pCell->IsMerged())
-				{
-					if(!pCell->IsMergeWithOthers())
-					{
-						pCell->SetCoords(row,col);
-                        pCell->Draw(pDC, row, col, rect, false);
-					}
-					else
-					{
-						CGridCellBase* pMergedCell=GetCell(pCell->GetMergeCellID());
-						CRect mergerect=rect;
-                        if(cellRangeRect(pMergedCell->m_MergeRange,&mergerect))
-						{
-							mergerect.DeflateRect(0,0,1,1);
-							pMergedCell->SetCoords(pCell->GetMergeCellID().row,pCell->GetMergeCellID().col);
-                            pMergedCell->Draw(pDC, pCell->GetMergeCellID().row,pCell->GetMergeCellID().col, mergerect, true);
-						}
-					}
-				}
-				else
-				{
-					CRect mergerect=rect;
-
-                    if(cellRangeRect(pCell->m_MergeRange,&mergerect))
-					{
-						mergerect.DeflateRect(0,0,1,1);
-						pCell->SetCoords(row,col);
-                        pCell->Draw(pDC, row, col, mergerect, true);
-					}
+                pCell = getCell(row, col);
+                if (pCell)
+                {
+                    pCell->setCoords(row,col);
+                    pCell->draw(painter, row, col, rect, false);
                 }
-            }*/
-		}
+            }
+        }
     }
 
 
@@ -2043,26 +1905,24 @@ void HGridCtrl::validateAndModifyCellContents(int nRow, int nCol, const QString&
     if (!isCellEditable(nRow, nCol))
         return;
     //huangw 发送消息
-/*
-    if (SendMessageToParent(nRow, nCol, GVN_BEGINLABELEDIT) >= 0)
+
+    if (1/*SendMessageToParent(nRow, nCol, GVN_BEGINLABELEDIT) >= 0*/)
     {
-        CString strCurrentText = itemText(nRow, nCol);
+        QString strCurrentText = itemText(nRow, nCol);
         if (strCurrentText != strText)
         {
-            SetItemText(nRow, nCol, strText);
-            if (ValidateEdit(nRow, nCol, strText) && 
-                SendMessageToParent(nRow, nCol, GVN_ENDLABELEDIT) >= 0)
+            setItemText(nRow, nCol, strText);
+            if (validateEdit(nRow, nCol, strText))
             {
                 setModified(true, nRow, nCol);
-                RedrawCell(nRow, nCol);
+                redrawCell(nRow, nCol);
             }
             else
             {
-                SetItemText(nRow, nCol, strCurrentText);
+                setItemText(nRow, nCol, strCurrentText);
             }
         }
     }
-    */
 }
 
 void HGridCtrl::clearCells(HCellRange Selection)
@@ -7744,131 +7604,124 @@ void HGridCtrl::onEndEditCell(int nRow, int nCol, QString str)
 
 }
 
-/*
 // If this returns false then the editing isn't allowed
 // virtual
-bool HGridCtrl::ValidateEdit(int nRow, int nCol, LPCTSTR str)
+bool HGridCtrl::validateEdit(int nRow, int nCol, QString& str)
 {
-    CGridCellBase* pCell = GetCell(nRow, nCol);
+    HGridCellBase* pCell = getCell(nRow, nCol);
     Q_ASSERT(pCell);
     if (!pCell)
         return true;
 
-    return pCell->ValidateEdit(str);
+    return pCell->validateEdit(str);
 }
 
-/*
+
 //Merge the selected cells 
-//by Huang Wei
-HCellID HGridCtrl::GetMergeCellID(HCellID cell)
+HCellID HGridCtrl::mergeCellID(HCellID cell)
 {
-    CGridCellBase *pCell = (CGridCellBase*) GetCell(cell);
-	if(pCell && pCell->IsMergeWithOthers())
-		return pCell->GetMergeCellID();
+    HGridCellBase *pCell = (HGridCellBase*)getCell(cell);
+    if(pCell && pCell->isMergeWithOthers())
+        return pCell->MergeCellID();
 	return cell;
 }
-//Merge the selected cells 
-//by Huang Wei
-CGridCellBase* HGridCtrl::GetCell(HCellID cell)
+
+HGridCellBase* HGridCtrl::getCell(HCellID cell)
 {
-	return GetCell(cell.row,cell.col);
+    return getCell(cell.row,cell.col);
 }
-//Merge the selected cells 
-//by Huang Wei
-void HGridCtrl::MergeSelectedCells()
+
+void HGridCtrl::setMergeSelectedCells()
 {
     HCellRange range=selectedCellRange();
-	if(range.GetColSpan()<=1 && range.GetRowSpan()<=1)
+    if(range.colSpan()<=1 && range.rowSpan()<=1)
 		return;
-	MergeCells(range.GetMinRow(), range.GetMinCol(), range.GetMaxRow(), range.GetMaxCol());
+    setMergeCells(range.minRow(), range.minCol(), range.maxRow(), range.maxCol());
 }
-//Merge the selected cells 
-//by Huang Wei
-void HGridCtrl::MergeCells(int nStartRow, int nStartCol, int nEndRow, int nEndCol)
+
+void HGridCtrl::setMergeCells(int nStartRow, int nStartCol, int nEndRow, int nEndCol)
 {
-	for(int row=nStartRow;row<=nEndRow;row++)
+    for(int row = nStartRow;row <= nEndRow;row++)
 	{
-		for(int col=nStartCol;col<=nEndCol;col++)
+        for(int col = nStartCol;col <= nEndCol;col++)
 		{
-		    CGridCellBase *pCell = (CGridCellBase*) GetCell(row,col);
-            pCell->Show(false);
-			if(row==nStartRow && col==nStartCol)
+            HGridCellBase *pCell = (HGridCellBase*) getCell(row,col);
+            pCell->setShow(false);
+            //开始行列记录合并范围
+            if(row == nStartRow && col == nStartCol)
 			{
                 HCellRange range(nStartRow,  nStartCol,  nEndRow,  nEndCol);
-				pCell->SetMergeRange(range);
+                pCell->setMergeRange(range);
 			}
 			else
 			{
+                //其他行列记录初始行列
                 HCellID cell(nStartRow,nStartCol);
-				pCell->SetMergeCellID(cell);
+                pCell->setMergeCellID(cell);
 			}
 
 		}
 	}
-	Invalidate();
+    //invalidateCellRect();
 }
-//Merge the selected cells 
-//by Huang Wei
-void HGridCtrl::UnMergeSelectedCells()
+
+void HGridCtrl::setSplitSelectedCells()
 {
     HCellRange range=selectedCellRange();
-	UnMergeCells(range.GetMinRow(), range.GetMinCol(), range.GetMaxRow(), range.GetMaxCol());
+    setSplitCells(range.GetMinRow(), range.GetMinCol(), range.GetMaxRow(), range.GetMaxCol());
 }
-//Merge the selected cells 
-//by Huang Wei
-void HGridCtrl::UnMergeCells(int nStartRow, int nStartCol, int nEndRow, int nEndCol)
+
+void HGridCtrl::setSplitCells(int nStartRow, int nStartCol, int nEndRow, int nEndCol)
 {
-	for(int row=nStartRow;row<=nEndRow;row++)
+    for(int row = nStartRow;row <= nEndRow;row++)
 	{
-		for(int col=nStartCol;col<=nEndCol;col++)
+        for(int col = nStartCol;col <= nEndCol;col++)
 		{
-		    CGridCellBase *pCell = (CGridCellBase*) GetCell(row,col);
-			if(pCell->IsMerged())
+            HGridCellBase *pCell = (HGridCellBase*) getCell(row,col);
+            if(pCell->isMerged())
 			{
-				for(int mergerow=pCell->GetMergeRange().GetMaxRow();mergerow>=pCell->GetMergeRange().GetMinRow();mergerow--)
-					for(int mergecol=pCell->GetMergeRange().GetMaxCol();mergecol>=pCell->GetMergeRange().GetMinCol();mergecol--)
+                for(int mergerow = pCell->mergeRange().maxRow();mergerow >= pCell->mergeRange().minRow();mergerow--)
+                    for(int mergecol = pCell->mergeRange().maxCol();mergecol >= pCell->mergeRange().minCol();mergecol--)
 					{
-						if(pCell->GetMergeRange().GetMaxRow()==-1 || pCell->GetMergeRange().GetMaxCol()==-1)
+                        if(pCell->mergeRange().maxRow()==-1 || pCell->mergeRange().maxCol()==-1)
 							break;
-						CGridCellBase *pMergedCell = (CGridCellBase*) GetCell(mergerow,mergecol);
-						pMergedCell->UnMerge();
+                        HGridCellBase *pMergedCell = (HGridCellBase*) getCell(mergerow,mergecol);
+                        pMergedCell->split();
 					}
 
 			}
 			else
-				pCell->UnMerge();
+                pCell->split();
 		}
 	}
-	Invalidate();
+    //Invalidate();
 }
-//Merge the selected cells 
-//by Huang Wei
-int  HGridCtrl::GetMergeCellWidth(HCellID cell)
+
+int HGridCtrl::mergeCellWidth(HCellID cell)
 {
-    HCellID mergecell =GetMergeCellID(cell);
-    CGridCellBase *pCell = (CGridCellBase*) GetCell(mergecell);
-	if(!pCell->IsMerged())
-		return GetColumnWidth(cell.col);
+    HCellID mergecell = mergeCellID(cell);
+    HGridCellBase *pCell = (HGridCellBase*) getCell(mergecell);
+    if(!pCell->isMerged())
+        return columnWidth(cell.col);
 	int width=0;
-	for(int mergecol=pCell->GetMergeRange().GetMaxCol();mergecol>=pCell->GetMergeRange().GetMinCol();mergecol--)
+    for(int mergecol = pCell->mergeRange().maxCol();mergecol >= pCell->mergeRange().minCol();mergecol--)
 	{
-		width+=GetColumnWidth(mergecol);
+        width += columnWidth(mergecol);
 	}
 	return width;
 }
-//Merge the selected cells 
-//by Huang Wei
-int  HGridCtrl::GetMergeCellHeight(HCellID cell)
+
+int HGridCtrl::mergeCellHeight(HCellID cell)
 {
-    HCellID mergecell =GetMergeCellID(cell);
-    CGridCellBase *pCell = (CGridCellBase*) GetCell(mergecell);
-	if(!pCell->IsMerged())
-		return GetRowHeight(cell.row);
+    HCellID mergecell = mergeCellID(cell);
+    HGridCellBase *pCell = (HGridCellBase*) getCell(mergecell);
+    if(!pCell->isMerged())
+        return rowHeight(cell.row);
 	int height=0;
-	for(int mergerow=pCell->GetMergeRange().GetMaxRow();mergerow>=pCell->GetMergeRange().GetMinRow();mergerow--)
+    for(int mergerow = pCell->mergeRange().maxRow();mergerow >= pCell->mergeRange().minRow();mergerow--)
 	{
-		height+=GetRowHeight(mergerow);
+        height += rowHeight(mergerow);
 	}
 	return height;
 }
-*/
+
