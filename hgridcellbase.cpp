@@ -460,12 +460,12 @@ bool HGridCellBase::textRect( QRect& rect)
     return true;
 }
 
-QSize HGridCellBase::textExtent(const QString& szText)
+QSize HGridCellBase::textExtent(const QString& strText)
 {
     //初始化单元格的时候
     HGridCtrl* pGrid = grid();
     Q_ASSERT(pGrid);
-
+    QString szText = strText;
     if (szText.isEmpty())
     {
         HGridDefaultCell* pDefCell = (HGridDefaultCell*) defaultCell();

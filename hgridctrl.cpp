@@ -191,6 +191,7 @@ void HGridCtrl::setupDefaultCells()
 
 void HGridCtrl::paintEvent(QPaintEvent* event)
 {
+    Q_UNUSED(event);
     QPainter painter(viewport());      // device context for painting
     m_painter = &painter;
 
@@ -1006,7 +1007,8 @@ void HGridCtrl::OnEndInPlaceEdit(NMHDR* pNMHDR, LRESULT* pResult)
 // Handle horz scrollbar notifications 水平滚动条
 void HGridCtrl::onHScroll(uint nSBCode, uint nPos, QScrollBar* pScrollBar)
 {
-
+    Q_UNUSED(pScrollBar);
+    Q_UNUSED(nPos);
     endEditing();//huangw
 
     int scrollPos = scrollPos32(QSB_HORZ);
@@ -1345,7 +1347,7 @@ void HGridCtrl::onDraw(QPainter* painter)
                         QRect mergerect=rect;
                         if(cellRangeRect(pMergedCell->mergeRange(),mergerect))
 						{
-							mergerect.DeflateRect(0,0,1,1);
+                            mergerect.adjust(0,0,1,1);
                             pMergedCell->setCoords(pCell->mergeCellID().row,pCell->mergeCellID().col);
                             pMergedCell->draw(painter, pCell->mergeCellID().row,pCell->mergeCellID().col, mergerect, true);
 						}
@@ -1354,10 +1356,9 @@ void HGridCtrl::onDraw(QPainter* painter)
 				else
 				{
                     QRect mergerect=rect;
-
                     if(cellRangeRect(pCell->mergeRange(),mergerect))
 					{
-						mergerect.DeflateRect(0,0,1,1);
+                        mergerect.adjust(0,0,1,1);
                         pCell->setCoords(row,col);
                         pCell->draw(painter, row, col, mergerect, true);
 					}
@@ -1571,51 +1572,7 @@ bool HGridCtrl::redrawCell(int nRow, int nCol, QPainter* pDC )
     QRect rect;
     if (!cellRect(nRow, nCol, rect))
         return false;
-
-
-    //redrawCell函数好像没什么用 待确定
-    if(NULL == pDC)
-    {
-        //pDC = new QPainter(viewport());
-    }
-
-    if (pDC)
-    {
-        // Redraw cells directly
-       /* if (nRow < m_nFixedRows || nCol < m_nFixedCols)
-        {
-            HGridCellBase* pCell = getCell(nRow, nCol);
-            if (pCell)
-                bResult = pCell->draw(pDC, nRow, nCol, rect, true);
-        }
-        else
-        {
-            HGridCellBase* pCell = getCell(nRow, nCol);
-            if (pCell)
-                bResult = pCell->draw(pDC, nRow, nCol, rect, true);
-
-            // Since we have erased the background, we will need to redraw the gridlines
-            pDC->save();
-            QPen pen(m_crGridLineColour,0,Qt::SolidLine);
-            //pen.CreatePen(PS_SOLID, 0, m_crGridLineColour);
-            //CPen* pOldPen = (CPen*) pDC->SelectObject(&pen);
-            pDC->setPen(pen);
-            if (m_nGridLines == GVL_BOTH || m_nGridLines == GVL_HORZ)
-            {
-                pDC->drawLine(QPoint(rect.left(),rect.bottom()),QPoint(rect.right() + 1, rect.bottom()));
-                //pDC->LineTo(rect.right + 1, rect.bottom);
-            }
-            if (m_nGridLines == GVL_BOTH || m_nGridLines == GVL_VERT)
-            {
-                pDC->drawLine(QPoint(rect.right(), rect.top()),QPoint(rect.right(), rect.bottom() + 1));
-                //pDC->LineTo(rect.right, rect.bottom + 1);
-            }
-            pDC->restore();
-            //pDC->SelectObject(pOldPen);
-
-        }*/
-    } else
-        viewport()->update(rect);     // Could not get a DC - invalidate it anyway
+    update();
     // and hope that OnPaint manages to get one
     return bResult;
 }
@@ -1899,12 +1856,12 @@ void HGridCtrl::onSelecting(const HCellID& currentCell)
     setFocusCell(max(currentCell.row, m_nFixedRows), max(currentCell.col, m_nFixedCols));
 }
 
-void HGridCtrl::validateAndModifyCellContents(int nRow, int nCol, const QString& strText)
+void HGridCtrl::validateAndModifyCellContents(int nRow, int nCol, const QString& szText)
 {
     if (!isCellEditable(nRow, nCol))
         return;
     //huangw 发送消息
-
+    QString strText = szText;
     if (1/*SendMessageToParent(nRow, nCol, GVN_BEGINLABELEDIT) >= 0*/)
     {
         QString strCurrentText = itemText(nRow, nCol);
@@ -2571,11 +2528,11 @@ HCellRange HGridCtrl::unobstructedNonFixedCellRange(bool bForceRecalculation )
     for (i = idTopLeft.row; i < rowCount(); i++)
     {
         bottom += rowHeight(i);
-        if (bottom >= rect.bottom)
+        if (bottom >= rect.bottom())
             break;
     }
     int maxVisibleRow = min(i, rowCount() - 1);
-    if (maxVisibleRow > 0 && bottom > rect.bottom)
+    if (maxVisibleRow > 0 && bottom > rect.bottom())
         maxVisibleRow--;
 
     // calc right
@@ -2583,11 +2540,11 @@ HCellRange HGridCtrl::unobstructedNonFixedCellRange(bool bForceRecalculation )
     for (i = idTopLeft.col; i < columnCount(); i++)
     {
         right += columnWidth(i);
-        if (right >= rect.right)
+        if (right >= rect.right())
             break;
     }
     int maxVisibleCol = min(i, columnCount() - 1);
-    if (maxVisibleCol > 0 && right > rect.right)
+    if (maxVisibleCol > 0 && right > rect.right())
         maxVisibleCol--;
 
 
@@ -2808,31 +2765,39 @@ bool HGridCtrl::cellOriginNoMerge(int nRow, int nCol, QPoint& p)
         (nCol>= m_nFixedCols && nCol < idTopLeft.col))
         return false;
 
-    p->x = 0;
+    p.setX(0);
+    int pX = 0;
     if (nCol < m_nFixedCols)                      // is a fixed column
+    {
         for (i = 0; i < nCol; i++)
-            p->x += columnWidth(i);
-        else 
-        {                                        // is a scrollable data column
-            for (i = 0; i < m_nFixedCols; i++)
-                p->x += columnWidth(i);
-            for (i = idTopLeft.col; i < nCol; i++)
-                p->x += columnWidth(i);
-        }
+            pX += columnWidth(i);
+    }
+    else
+    {                                        // is a scrollable data column
+        for (i = 0; i < m_nFixedCols; i++)
+            pX += columnWidth(i);
+        for (i = idTopLeft.col; i < nCol; i++)
+            pX += columnWidth(i);
+    }
+    p.setX(pX);
         
-        p->y = 0;
-        if (nRow < m_nFixedRows)                      // is a fixed row
-            for (i = 0; i < nRow; i++)
-                p->y += rowHeight(i);
-            else 
-            {                                        // is a scrollable data row
-                for (i = 0; i < m_nFixedRows; i++)
-                    p->y += rowHeight(i);
-                for (i = idTopLeft.row; i < nRow; i++)
-                    p->y += rowHeight(i);
-            }
-            
-            return true;
+    p.setY(0);
+    int pY = 0;
+    if (nRow < m_nFixedRows)                      // is a fixed row
+    {
+        for (i = 0; i < nRow; i++)
+            pY += rowHeight(i);
+    }
+    else
+    {                                        // is a scrollable data row
+        for (i = 0; i < m_nFixedRows; i++)
+            pY += rowHeight(i);
+        for (i = idTopLeft.row; i < nRow; i++)
+            pY += rowHeight(i);
+    }
+    p.setY(pY);
+
+    return true;
 }
 
 bool HGridCtrl::cellOrigin(int nRow, int nCol, QPoint& p)
@@ -4409,16 +4374,16 @@ bool HGridCtrl::autoSizeColumn(int nCol, uint nAutoSizeStyle ,bool bResetScroll 
     int nStartRow = (nAutoSizeStyle & GVS_HEADER)? 0 : fixedRowCount();
     int nEndRow   = (nAutoSizeStyle & GVS_DATA)? rowCount()-1 : fixedRowCount()-1;
 
-    if (GetVirtualMode())
-        SendCacheHintToParent(HCellRange(nStartRow, nCol, nEndRow, nCol));
+    //if (isVirtualMode())
+    //    SendCacheHintToParent(HCellRange(nStartRow, nCol, nEndRow, nCol));
 
     for (int nRow = nStartRow; nRow <= nEndRow; nRow++)
     {
         HGridCellBase* pCell = getCell(nRow, nCol);
         if (pCell)
             size = pCell->cellExtent();
-        if (size.cx > nWidth)
-            nWidth = size.cx;
+        if (size.width() > nWidth)
+            nWidth = size.width();
     }
 
     //if (GetVirtualMode())
@@ -4454,8 +4419,8 @@ bool HGridCtrl::autoSizeRow(int nRow, bool bResetScroll )
         HGridCellBase* pCell = getCell(nRow, nCol);
         if (pCell)
             size = pCell->cellExtent();
-        if (size.cy > nHeight)
-            nHeight = size.cy;
+        if (size.height() > nHeight)
+            nHeight = size.height();
     }
     m_arRowHeights[nRow] = nHeight;
 
@@ -4531,10 +4496,10 @@ void HGridCtrl::autoSize(uint nAutoSizeStyle )
                     HGridCellBase* pCell = getCell(nRow, nCol);
                     if (pCell)
                         size = pCell->cellExtent();
-                    if (size.cx >(int) m_arColWidths[nCol])
-                        m_arColWidths[nCol] = size.cx;
-                    if (size.cy >(int) m_arRowHeights[nRow])
-                        m_arRowHeights[nRow] = size.cy;
+                    if (size.width() >(int) m_arColWidths[nCol])
+                        m_arColWidths[nCol] = size.width();
+                    if (size.height() >(int) m_arRowHeights[nRow])
+                        m_arRowHeights[nRow] = size.height();
                 }
             }
         }
@@ -4576,8 +4541,8 @@ void HGridCtrl::expandColumnsToFit(bool bExpandFixed )
     if (nNumColumnsAffected <= 0)
         return;
 
-    long virtualWidth = virtualWidth();
-    int nDifference = rect.Width() -(int) virtualWidth;
+    long virtual_Width = virtualWidth();
+    int nDifference = rect.width() -(int) virtual_Width;
     int nColumnAdjustment = nDifference / nNumColumnsAffected;
 
     for (int col = nFirstColumn; col < columnCount(); col++)
@@ -4629,14 +4594,11 @@ void HGridCtrl::expandLastColumn()
     QRect rect;
     rect = viewport()->rect();
 
-    long virtualWidth = virtualWidth();
-    int nDifference = rect.Width() -(int) virtualWidth;
+    long virtual_Width = virtualWidth();
+    int nDifference = rect.width() -(int) virtual_Width;
 
     if (nDifference > 0)
     {
-        //if (GetVirtualHeight() > rect.Height())
-        //    nDifference -= GetSystemMetrics(SM_CXVSCROLL);
-
         m_arColWidths[ nLastColumn ] += nDifference;
         refresh();
     }
@@ -4674,8 +4636,8 @@ void HGridCtrl::expandRowsToFit(bool bExpandFixed )
     if (nNumRowsAffected <= 0)
         return;
 
-    long virtualHeight = virtualHeight();
-    int nDifference = rect.Height() -(int) virtualHeight;
+    long virtual_Height = virtualHeight();
+    int nDifference = rect.height() -(int) virtual_Height;
     int nRowAdjustment = nDifference / nNumRowsAffected;
     
     for (int row = nFirstRow; row < rowCount(); row++)
@@ -4955,9 +4917,7 @@ bool HGridCtrl::isCellVisible(const HCellID& cell)
 
 bool HGridCtrl::isCellVisible(int nRow, int nCol)
 {
-    //question --huangw 计算x,y有什么用？
     int x, y;
-
     HCellID TopLeft;
     if (nCol >= fixedColumnCount() || nRow >= fixedRowCount())
     {
@@ -4968,8 +4928,7 @@ bool HGridCtrl::isCellVisible(int nRow, int nCol)
             return false;
     }
     
-    QRect rect = this->rect();//huangw rect()不包含框架的矩形
-    //GetClientRect(rect);
+    QRect rect = viewport()->rect();
     if (nCol < fixedColumnCount())
     {
         x = 0;
@@ -5036,8 +4995,8 @@ bool HGridCtrl::invalidateCellRect(const int row, const int col)
     QRect rect;
     if (!cellRect(row, col, rect))
         return false;
-    rect.setRight(rect.right()+5);
-    rect.setBottom(rect.bottom()+5);
+    //rect.setRight(rect.right()+5);
+    //rect.setBottom(rect.bottom()+5);
     update();
     return true;
 }
@@ -5048,16 +5007,15 @@ bool HGridCtrl::invalidateCellRect(const HCellRange& cellRange)
     if (!m_bAllowDraw)
         return false;
 
-    /*HCellRange visibleCellRange = visibleNonFixedCellRange().Intersect(cellRange);
+    HCellRange visibleCellRange = visibleNonFixedCellRange().intersect(cellRange);
 
     QRect rect;
     if (!cellRangeRect(visibleCellRange, rect))
         return false;
 
-    rect.right++;
-    rect.bottom++;*/
-    update(); //重绘 huangw
-
+    //rect.right++;
+    //rect.bottom++;*/
+    update(); //重绘
     return true;
 }
 
@@ -5614,10 +5572,10 @@ void HGridCtrl::mouseDoubleClickEvent(QMouseEvent *event)
     if (m_MouseMode == MOUSE_OVER_COL_DIVIDE)
     {
         QPoint start;
-        if (!cellOrigin(0, cell.col, &start))
+        if (!cellOrigin(0, cell.col, start))
             return;
 
-        if (point.x - start.x < m_nResizeCaptureRange)     // Clicked right of border
+        if (point.x() - start.x() < m_nResizeCaptureRange)     // Clicked right of border
             cell.col--;
 
         //ignore columns that are hidden and look left towards first visible column
@@ -5634,16 +5592,16 @@ void HGridCtrl::mouseDoubleClickEvent(QMouseEvent *event)
         if( !bFoundVisible)
             return;
 
-        autoSizeColumn(cell.col, GetAutoSizeStyle());
-        Invalidate();
+        autoSizeColumn(cell.col, autoSizeStyle());
+        update();
     }
     else if (m_MouseMode == MOUSE_OVER_ROW_DIVIDE)
     {
         QPoint start;
-        if (!cellOrigin(0, cell.col, &start))
+        if (!cellOrigin(0, cell.col, start))
             return;
 
-        if (point.y - start.y < m_nResizeCaptureRange)     // Clicked below border
+        if (point.y() - start.y() < m_nResizeCaptureRange)     // Clicked below border
             cell.row--;
 
         //  ignore rows that are hidden and look up towards first visible row
@@ -5661,7 +5619,7 @@ void HGridCtrl::mouseDoubleClickEvent(QMouseEvent *event)
             return;
 
         autoSizeRow(cell.row);
-        Invalidate();
+        update();
     }
     else if (m_MouseMode == MOUSE_NOTHING)
     {
@@ -5678,7 +5636,7 @@ void HGridCtrl::mouseDoubleClickEvent(QMouseEvent *event)
         {
             QRect rectCell;
             if (cellRect(cell.row, cell.col, rectCell) && pCell->textRect(rectCell))
-                bInTextArea = rectCell.ptInRect(point);// huangw
+                bInTextArea = rectCell.contains(point);// huangw
         }
 
         if (cell.row >= m_nFixedRows && isValid(m_LeftClickDownCell) &&
@@ -6115,7 +6073,7 @@ void HGridCtrl::setMergeCells(int nStartRow, int nStartCol, int nEndRow, int nEn
 void HGridCtrl::setSplitSelectedCells()
 {
     HCellRange range=selectedCellRange();
-    setSplitCells(range.GetMinRow(), range.GetMinCol(), range.GetMaxRow(), range.GetMaxCol());
+    setSplitCells(range.minRow(), range.minCol(), range.maxRow(), range.maxCol());
 }
 
 void HGridCtrl::setSplitCells(int nStartRow, int nStartCol, int nEndRow, int nEndCol)
