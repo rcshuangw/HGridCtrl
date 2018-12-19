@@ -460,13 +460,13 @@ bool HGridCellBase::textRect( QRect& rect)
     return true;
 }
 
-QSize HGridCellBase::textExtent(const QString& szText, QPainter* painter)
+QSize HGridCellBase::textExtent(const QString& szText)
 {
     //初始化单元格的时候
     HGridCtrl* pGrid = grid();
     Q_ASSERT(pGrid);
 
-    if (painter == NULL || szText.isEmpty())
+    if (szText.isEmpty())
     {
         HGridDefaultCell* pDefCell = (HGridDefaultCell*) defaultCell();
         Q_ASSERT(pDefCell);
@@ -475,16 +475,14 @@ QSize HGridCellBase::textExtent(const QString& szText, QPainter* painter)
 
     QSize size;
     int nFormat = format();
-
-    painter->setFont(font());
     QFontMetrics fontMetrics(font());
     // If the cell is a multiline cell, then use the width of the cell
     // to get the height
+    //如果多行文字，则把文字先排列成1行 然后求出size
     if ((nFormat & QDT_WORDBREAK) && !(nFormat & QDT_SINGLELINE))
     {
         QString str = szText;
         int nMaxWidth = 0;
-        //需要这样做吗？--huangw
         while (true)
         {
             int nPos = str.indexOf(('\n'));
@@ -497,37 +495,18 @@ QSize HGridCellBase::textExtent(const QString& szText, QPainter* painter)
                 break;
             str = str.mid(nPos + 1);    // Bug fix by Thomas Steinborn
         }
-
-        QRect rect;
-        rect.setRect(0,0, nMaxWidth+1, 0);
-        QRect boundingRect;
-        painter->drawText(rect,nFormat,szText,&boundingRect);
-        size = boundingRect.size();
+        szText = str;
     }
 
     size = fontMetrics.size(nFormat,szText);
     size += QSize(4*margin(), 2*margin());
-
-    //Qt暂不支持垂直字体
-    // Kludge for vertical text
-    /*LOGFONT *pLF = GetFont();
-    if (pLF->lfEscapement == 900 || pLF->lfEscapement == -900)
-    {
-        int nTemp = size.cx;
-        size.cx = size.cy;
-        size.cy = nTemp;
-        size += CSize(0, 4*GetMargin());
-    }
-
-    if (bReleaseDC)
-        pGrid->ReleaseDC(pDC);*/
     return size;
 }
 
 //单元格有文字和图片的size
-QSize HGridCellBase::cellExtent(QPainter* painter)
+QSize HGridCellBase::cellExtent()
 {
-    QSize size = textExtent(text(),painter);
+    QSize size = textExtent(text());
     QSize imageSize(0,0);
     if (image() >= 0)
     {
