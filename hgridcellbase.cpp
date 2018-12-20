@@ -729,7 +729,7 @@ bool HGridCellBase::isShow()
 
 bool HGridCellBase::isMerged()
 {
-    return m_MergeRange.count() > 0;
+    return m_MergeRange.count() > 1;
 }
 
 void HGridCellBase::setMergeRange(HCellRange range)
