@@ -51,8 +51,8 @@ HGridCtrl::HGridCtrl(int nRows, int nCols, int nFixedRows, int nFixedCols,QWidge
     m_MouseMode           = MOUSE_NOTHING;
     m_nGridLines          = GVL_BOTH;
     m_bEditable           = true;
-    m_bVerticalHeader     = true;
-    m_bHorizontalHeader   = true;
+    //m_bVerticalHeader     = true;
+    //m_bHorizontalHeader   = true;
     m_bListMode           = false;
     m_bSingleRowSelection = false;
     m_bSingleColSelection = false;
@@ -1052,10 +1052,7 @@ void HGridCtrl::onDraw(QPainter* painter)
             {
                 if (columnWidth(col) <= 0) continue;
                 x += columnWidth(col);
-                if(isVerticalHeader())
-                    painter->drawLine(QPoint(x-1,nFixedRowHeight),QPoint(x-1,VisRect.bottom()));
-                else
-                    painter->drawLine(QPoint(x-1,VisRect.top()),QPoint(x-1,VisRect.bottom()));
+                painter->drawLine(QPoint(x-1,nFixedRowHeight),QPoint(x-1,VisRect.bottom()));
             }
         }
 
@@ -1068,10 +1065,7 @@ void HGridCtrl::onDraw(QPainter* painter)
                 if (rowHeight(row) <= 0) continue;
 
                 y += rowHeight(row);
-                if(isHorizontalHeader())
-                    painter->drawLine(QPoint(nFixedColWidth,y-1),QPoint(VisRect.right(),y-1));
-                else
-                    painter->drawLine(QPoint(VisRect.left(),y-1),QPoint(VisRect.right(),y-1));
+                painter->drawLine(QPoint(nFixedColWidth,y-1),QPoint(VisRect.right(),y-1));
             }
         }
     }
@@ -1079,8 +1073,6 @@ void HGridCtrl::onDraw(QPainter* painter)
     painter->setPen(Qt::NoPen);
     //2.绘制单元格里面的内容
     rect.setBottom(nFixedRowHeight-1);
-    if(!isVerticalHeader())
-        rect.setBottom(-1);
     for (row = minVisibleRow; row <= maxVisibleRow; row++)
     {
         if (rowHeight(row) <= 0) continue;
@@ -1095,8 +1087,6 @@ void HGridCtrl::onDraw(QPainter* painter)
             continue;
 
         rect.setRight(nFixedColWidth-1);
-        if(!isHorizontalHeader())
-            rect.setRight(-1);
         for (col = minVisibleCol; col <= maxVisibleCol; col++)
         {
             if (columnWidth(col) <= 0) continue;
@@ -1148,118 +1138,108 @@ void HGridCtrl::onDraw(QPainter* painter)
     //注意：表头行列此处没有实现合并部分，有点类似excel
     // draw fixed column cells:  m_nFixedRows..n, 0..m_nFixedCols-1
     //3.绘制列表头部分
-    if(m_bVerticalHeader)
+    rect.setBottom(nFixedRowHeight-1);
+    for (row = minVisibleRow; row <= maxVisibleRow; row++)
     {
-        rect.setBottom(nFixedRowHeight-1);
-        for (row = minVisibleRow; row <= maxVisibleRow; row++)
+        if (rowHeight(row) <= 0) continue;
+
+        rect.setTop(rect.bottom()+1);
+        rect.setBottom(rect.top() + rowHeight(row)-1);
+
+        // rect.bottom = bottom pixel of previous row
+        if (rect.top() > clipRect.bottom())
+            break;                // Gone past cliprect
+        if (rect.bottom() < clipRect.top())
+            continue;             // Reached cliprect yet?
+
+        rect.setRight(-1);
+        for (col = 0; col < m_nFixedCols; col++)
         {
-            if (rowHeight(row) <= 0) continue;
+            if (columnWidth(col) <= 0) continue;
 
-            rect.setTop(rect.bottom()+1);
-            rect.setBottom(rect.top() + rowHeight(row)-1);
+            rect.setLeft(rect.right()+1);
+            rect.setRight(rect.left() + columnWidth(col)-1);
 
-            // rect.bottom = bottom pixel of previous row
-            if (rect.top() > clipRect.bottom())
-                break;                // Gone past cliprect
-            if (rect.bottom() < clipRect.top())
-                continue;             // Reached cliprect yet?
+            if (rect.left() > clipRect.right())
+                break;            // gone past cliprect
+            if (rect.right() < clipRect.left())
+                continue;         // Reached cliprect yet?
 
-            rect.setRight(-1);
-            for (col = 0; col < m_nFixedCols; col++)
+            //表格头不合并
+            pCell = getCell(row, col);
+            if (pCell)
             {
-                if (columnWidth(col) <= 0) continue;
-
-                rect.setLeft(rect.right()+1);
-                rect.setRight(rect.left() + columnWidth(col)-1);
-
-                if (rect.left() > clipRect.right())
-                    break;            // gone past cliprect
-                if (rect.right() < clipRect.left())
-                    continue;         // Reached cliprect yet?
-
-                //表格头不合并
-                pCell = getCell(row, col);
-                if (pCell)
-                {
-                    pCell->setCoords(row,col);
-                    pCell->draw(painter, row, col, rect, false);
-                }
+                pCell->setCoords(row,col);
+                pCell->draw(painter, row, col, rect, false);
             }
         }
     }
 
     // draw fixed row cells  0..m_nFixedRows, m_nFixedCols..n
     //4.绘制行表头问题
-    if(m_bHorizontalHeader)
+    rect.setBottom(-1);
+    for (row = 0; row < m_nFixedRows; row++)
     {
-        rect.setBottom(-1);
-        for (row = 0; row < m_nFixedRows; row++)
+        if (rowHeight(row) <= 0) continue;
+
+        rect.setTop(rect.bottom()+1);
+        rect.setBottom(rect.top() + rowHeight(row)-1);
+
+        // rect.bottom = bottom pixel of previous row
+        if (rect.top() > clipRect.bottom())
+            break;                // Gone past cliprect
+        if (rect.bottom() < clipRect.top())
+            continue;             // Reached cliprect yet?
+
+        rect.setRight(nFixedColWidth-1);
+        for (col = minVisibleCol; col <= maxVisibleCol; col++)
         {
-            if (rowHeight(row) <= 0) continue;
+            if (columnWidth(col) <= 0) continue;
 
-            rect.setTop(rect.bottom()+1);
-            rect.setBottom(rect.top() + rowHeight(row)-1);
+            rect.setLeft(rect.right()+1);
+            rect.setRight(rect.left() + columnWidth(col)-1);
 
-            // rect.bottom = bottom pixel of previous row
-            if (rect.top() > clipRect.bottom())
-                break;                // Gone past cliprect
-            if (rect.bottom() < clipRect.top())
-                continue;             // Reached cliprect yet?
+            if (rect.left() > clipRect.right())
+                break;        // gone past cliprect
+            if (rect.right() < clipRect.left())
+                continue;     // Reached cliprect yet?
 
-            rect.setRight(nFixedColWidth-1);
-            for (col = minVisibleCol; col <= maxVisibleCol; col++)
+            //表头不合并
+            pCell = getCell(row, col);
+            if (pCell)
             {
-                if (columnWidth(col) <= 0) continue;
-
-                rect.setLeft(rect.right()+1);
-                rect.setRight(rect.left() + columnWidth(col)-1);
-
-                if (rect.left() > clipRect.right())
-                    break;        // gone past cliprect
-                if (rect.right() < clipRect.left())
-                    continue;     // Reached cliprect yet?
-
-                //表头不合并
-                pCell = getCell(row, col);
-                if (pCell)
-                {
-                    pCell->setCoords(row,col);
-                    pCell->draw(painter, row, col, rect, false);
-                }
+                pCell->setCoords(row,col);
+                pCell->draw(painter, row, col, rect, false);
             }
         }
     }
 
 	// draw top-left cells 0..m_nFixedRows-1, 0..m_nFixedCols-1
     //只有行列头同时绘制的时候才绘制交叉位置
-    if(m_bHorizontalHeader && m_bVerticalHeader)
+    rect.setBottom(-1);
+    for (row = 0; row < m_nFixedRows; row++)
     {
-        rect.setBottom(-1);
-        for (row = 0; row < m_nFixedRows; row++)
+        if (rowHeight(row) <= 0) continue;
+
+        rect.setTop(rect.bottom()+1);
+        rect.setBottom(rect.top() + rowHeight(row)-1);
+        rect.setRight(-1);
+
+        for (col = 0; col < m_nFixedCols; col++)
         {
-            if (rowHeight(row) <= 0) continue;
+            if (columnWidth(col) <= 0) continue;
 
-            rect.setTop(rect.bottom()+1);
-            rect.setBottom(rect.top() + rowHeight(row)-1);
-            rect.setRight(-1);
+            rect.setLeft(rect.right()+1);
+            rect.setRight(rect.left() + columnWidth(col)-1);
 
-            for (col = 0; col < m_nFixedCols; col++)
+            pCell = getCell(row, col);
+            if (pCell)
             {
-                if (columnWidth(col) <= 0) continue;
-
-                rect.setLeft(rect.right()+1);
-                rect.setRight(rect.left() + columnWidth(col)-1);
-
-                pCell = getCell(row, col);
-                if (pCell)
-                {
-                    pCell->setCoords(row,col);
-                    pCell->draw(painter, row, col, rect, false);
-                }
+                pCell->setCoords(row,col);
+                pCell->draw(painter, row, col, rect, false);
             }
         }
     }
-
 
     //本来放在mouseMoveEvent里面的，但QPainter指针只能在paintEvent里面，所以放在此处
     if (m_bLMouseButtonDown)
@@ -4451,7 +4431,7 @@ void HGridCtrl::expandToFit(bool bExpandFixed )
 // Attributes
 void HGridCtrl::setVirtualMode(bool bVirtual)
 {
-    deleteAllItems();
+    //deleteAllItems();
     m_bVirtualMode = bVirtual;
 
     // Force some defaults here.
@@ -4462,8 +4442,11 @@ void HGridCtrl::setVirtualMode(bool bVirtual)
         setAutoSizeStyle(GVS_HEADER);
         setFixedColumnSelection(false);
         setFixedRowSelection(false);
-        enableHorizontalHeader(false);
-        enableVerticalHeader(false);
+        setFixedColumnCount(0);
+        setFixedRowCount(1);
+        //enableHorizontalHeader(false);
+        //enableVerticalHeader(false);
+
 
     }
 }
