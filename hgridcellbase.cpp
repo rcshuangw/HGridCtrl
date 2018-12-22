@@ -70,6 +70,8 @@ bool HGridCellBase::draw(QPainter* painter, int nRow, int nCol, QRect rect, bool
     //单元格的边框可以在这里绘制，如果设置了边框颜色和线条格式，就按照设置项绘制，注意：如果绘制bottom要获取同列的下一行表格，top要设置和bottom一样的风格。
     painter->save();
     painter->setBackgroundMode(Qt::TransparentMode);
+    //增加绘制表格外框
+    QRect rectBoard = rect.adjusted(-1,-1,0,0);
 
     // Get the default cell implementation for this kind of cell. We use it if this cell
     // has anything marked as "default"
@@ -104,7 +106,6 @@ bool HGridCellBase::draw(QPainter* painter, int nRow, int nCol, QRect rect, bool
         {
             //QBrush brush(TextBkClr);
             //painter->fillRect(rect, brush);
-
         }
 
         // Don't adjust frame rect if no grid lines so that the
@@ -185,6 +186,48 @@ bool HGridCellBase::draw(QPainter* painter, int nRow, int nCol, QRect rect, bool
             fix1Path.lineTo(rect.left(), rect.bottom());
             painter->drawPath(fix1Path);
             rect.adjust(-1,-1,-1,-1);
+        }
+        painter->restore();
+    }
+
+    if(isDrawBorder() && !isFixed() && pGrid->gridLines() != GVL_NONE)//只要上下左右任何一边有绘制 绘制表格属性为真
+    {
+        painter->save();
+        QPen pen(borderColor());
+        pen.setStyle(Qt::PenStyle(borderStyle()));
+        painter->setPen(pen);
+        painter->drawRect(rectBoard);
+
+        if(isDrawBorderLeft())
+        {
+            QPen leftPen(borderLeftColor());
+            leftPen.setStyle(Qt::PenStyle(borderLeftStyle()));
+            painter->setPen(leftPen);
+            painter->drawLine(QPoint(rectBoard.left(),rectBoard.top()),QPoint(rectBoard.left(),rectBoard.bottom()));
+        }
+
+        if(isDrawBorderRight())
+        {
+            QPen rightPen(borderRightColor());
+            rightPen.setStyle(Qt::PenStyle(borderRightStyle()));
+            painter->setPen(rightPen);
+            painter->drawLine(QPoint(rectBoard.right(),rectBoard.top()),QPoint(rectBoard.right(),rectBoard.bottom()));
+        }
+
+        if(isDrawBorderTop())
+        {
+            QPen topPen(borderTopColor());
+            topPen.setStyle(Qt::PenStyle(borderTopStyle()));
+            painter->setPen(topPen);
+            painter->drawLine(QPoint(rectBoard.left(),rectBoard.top()),QPoint(rectBoard.right(),rectBoard.top()));
+        }
+
+        if(isDrawBorderBottom())
+        {
+            QPen bottomPen(borderBottomColor());
+            bottomPen.setStyle(Qt::PenStyle(borderBottomStyle()));
+            painter->setPen(bottomPen);
+            painter->drawLine(QPoint(rectBoard.left(),rectBoard.bottom()),QPoint(rectBoard.right(),rectBoard.bottom()));
         }
         painter->restore();
     }
