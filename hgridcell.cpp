@@ -33,7 +33,7 @@ void HGridCell::reset()
     m_bEditing = false;
     m_pEditWnd = NULL;
 
-    m_nFormat = QDT_LEFT | QDT_CENTER;           // Use default from CGridDefaultCell
+    m_nFormat = QDT_LEFT;           // Use default from CGridDefaultCell
     m_crBkClr = QColor(QCLR_DEFAULT);     // Background colour (or CLR_DEFAULT)
     m_crFgClr = QColor(QCLR_DEFAULT);     // Forground colour (or CLR_DEFAULT)
     m_nMargin = (uint)-1;              // Use default from CGridDefaultCell

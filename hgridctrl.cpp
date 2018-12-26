@@ -5299,8 +5299,6 @@ void HGridCtrl::mouseReleaseEvent(QMouseEvent *event)
         return;
 }
 
-
-
 // Returns the point inside the cell that was clicked (coords relative to cell top left)
 QPoint HGridCtrl::pointClicked(int nRow, int nCol, const QPoint& point)
 {
