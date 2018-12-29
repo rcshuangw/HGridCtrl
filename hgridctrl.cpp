@@ -3160,7 +3160,7 @@ int HGridCtrl::insertRow(const QString& strHeading, int nRow )
     catch (exception e)
     {
         e.what();
-        return false;
+        return -1;
     }
 
     m_nRows++;
@@ -3193,6 +3193,40 @@ int HGridCtrl::insertRow(const QString& strHeading, int nRow )
     setModified();
     return nRow;
 }
+
+void HGridCtrl::autoColumnHeader()
+{
+    if(fixedColumnCount() < 1)
+        return;
+    int colTeam = columnCount() / 26 + 1;
+    char buf[256];
+    memset(buf,0,256);
+    for(int i = 0; i < colTeam;i++)
+    {
+        for(int t = 0; t < i;t++)
+            buf[t] = 'A';
+        QString strText = QString(buf);
+        QString strHead = strText;
+        for(int j = 0; j < 26;j++)
+        {
+            strHead = QString("%1%2").arg(strText).arg(ascii[j]);
+            setItemText(0,i*26+j+1,strHead);//(0,0)是不需要头文字
+        }
+    }
+}
+
+void HGridCtrl::autoRowHeader()
+{
+    if(fixedRowCount() < 1 )
+        return;
+    //行头是从第1行开始 固定0列，0行0列是公共区域
+    for(int i = 1; i < rowCount();i++)
+    {
+        QString strRowHeader = QString("%1").arg(i);
+        setItemText(i,0,strRowHeader);
+    }
+}
+
 /*
 ///////////////////////////////////////////////////////////////////////////////
 // Cell creation stuff
@@ -3314,20 +3348,16 @@ bool HGridCtrl::deleteRow(int nRow)
     resetSelectedRange();
     //if (!isVirtualMode())
     {
-        GRID_ROW* pRow = m_RowData[nRow];
+        //GRID_ROW* pRow = m_RowData[nRow];
+        GRID_ROW* pRow = m_RowData.takeAt(nRow);;
         if (!pRow)
             return false;
-
         for (int col = 0; col < columnCount(); col++)
             destroyCell(nRow, col);
-
         delete pRow;
-        m_RowData.removeAt(nRow);
-        //注意 如果以上不对将removeAt移到上面
     }
 
     m_arRowHeights.removeAt(nRow);
-
     m_nRows--;
     if (nRow < m_nFixedRows)
         m_nFixedRows--;
@@ -3338,8 +3368,7 @@ bool HGridCtrl::deleteRow(int nRow)
         m_idCurrentCell.row--;
     
     resetScrollBars();//刷新滚动条
-    setModified();
-    
+    setModified();   
     return true;
 }
 
