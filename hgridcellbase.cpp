@@ -81,31 +81,33 @@ bool HGridCellBase::draw(QPainter* painter, int nRow, int nCol, QRect rect, bool
 
     // Set up text and background colours
     QColor TextClr, TextBkClr;
-
-    TextClr = (textClr() == QColor(QCLR_DEFAULT))? pDefaultCell->textClr() : textClr();
+    TextBkClr = backClr();
+    TextClr = textClr();
+    /*TextClr = (textClr() == QColor(QCLR_DEFAULT))? pDefaultCell->textClr() : textClr();
     if (backClr() == QColor(QCLR_DEFAULT))
         TextBkClr = pDefaultCell->backClr();
     else
     {
         bEraseBkgnd = true;
         TextBkClr = backClr();
-    }
-
+    }*/
     if ( isFocused() || isDropHighlighted() )
     {
         // Always draw even in list mode so that we can tell where the
         // cursor is at.  Use the highlight colors though.
+        //如果选择的cell背景和字体都要变化就要用此功能
+
         if(state() & GVIS_SELECTED)
         {
-            TextBkClr = QColor(QCOLOR_HIGHLIGHT);
-            TextClr = QColor(QCOLOR_HIGHLIGHTTEXT);
+            TextBkClr = backClr();
+            TextClr = textClr();
             bEraseBkgnd = true;
         }
 
         if (bEraseBkgnd)
         {
-            //QBrush brush(TextBkClr);
-            //painter->fillRect(rect, brush);
+            QBrush brush(TextBkClr);
+            painter->fillRect(rect, brush);
         }
 
         // Don't adjust frame rect if no grid lines so that the
@@ -143,10 +145,10 @@ bool HGridCellBase::draw(QPainter* painter, int nRow, int nCol, QRect rect, bool
     {
         if (bEraseBkgnd)
         {
-            rect.adjust(0,0,1,1);    // FillRect doesn't draw RHS or bottom
+            rect.adjust(0,0,-2,-2);    // FillRect doesn't draw RHS or bottom
             QBrush brush(TextBkClr);
             painter->fillRect(rect,brush);//也可以用brush
-            rect.adjust(0,0,-1,-1);
+            rect.adjust(0,0,2,2);
         }
         painter->setPen(QPen(TextClr));//设置画笔的颜色
     }
@@ -236,6 +238,7 @@ bool HGridCellBase::draw(QPainter* painter, int nRow, int nCol, QRect rect, bool
 
     // We want to see '&' characters so use DT_NOPREFIX
     textRect(rect);
+    painter->setFont(font());
     painter->drawText(rect,format()|QDT_NOPREFIX,text());
     painter->restore();
     return true;

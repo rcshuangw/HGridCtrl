@@ -34,8 +34,8 @@ void HGridCell::reset()
     m_pEditWnd = NULL;
 
     m_nFormat = QDT_LEFT;           // Use default from CGridDefaultCell
-    m_crBkClr = QColor(QCLR_DEFAULT);     // Background colour (or CLR_DEFAULT)
-    m_crFgClr = QColor(QCLR_DEFAULT);     // Forground colour (or CLR_DEFAULT)
+    m_crBkClr = QColor(Qt::white);     // Background colour (or CLR_DEFAULT)
+    m_crFgClr = QColor(Qt::black);     // Forground colour (or CLR_DEFAULT)
     m_nMargin = (uint)-1;              // Use default from CGridDefaultCell
     m_plfFont = QFont(QStringLiteral("宋体"),10, QFont::Normal);
     m_lParam  = quint32(0);
@@ -50,13 +50,13 @@ void HGridCell::reset()
     m_nLeftBorderStyle   = Qt::NoPen;
     m_nTopBorderStyle    = Qt::NoPen;
     m_nRightBorderStyle  = Qt::NoPen;
-    m_nBottomBorderStyle = Qt::SolidLine;
+    m_nBottomBorderStyle = Qt::NoPen;
 
     m_crBoderClr       = QColor(Qt::black);
     m_crLeftBoderClr   = QColor(Qt::black);
-    m_crTopBoderClr    = QColor(Qt::blue);
+    m_crTopBoderClr    = QColor(Qt::black);
     m_crRightBoderClr  = QColor(Qt::black);
-    m_crBottomBoderClr = QColor(Qt::blue);
+    m_crBottomBoderClr = QColor(Qt::black);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -88,6 +88,7 @@ bool HGridCell::edit(int nRow, int nCol, const QRect& rect, const QPoint& point)
         quint32 dwStyle = format();
         HGridCtrl* pGrid = grid();
         m_pEditWnd = new HInPlaceEdit((QWidget*)pGrid, rect, dwStyle, nRow, nCol, text());
+        m_pEditWnd->setFocusPolicy(Qt::StrongFocus);
         m_pEditWnd->resize(rect.width(),rect.height());
         m_pEditWnd->move(rect.left(),rect.top());
         m_pEditWnd->show();
@@ -117,8 +118,8 @@ HGridDefaultCell::HGridDefaultCell()
 {
 
     m_nFormat = QDT_CENTER|QDT_SINGLELINE|QDT_NOPREFIX;
-    m_crFgClr = QColor(QCLR_DEFAULT);
-    m_crBkClr = QColor(QCLR_DEFAULT);
+    m_crFgClr = QColor(Qt::black);
+    m_crBkClr = QColor(Qt::white);
     m_Size    = QSize(100,25);
     m_dwStyle = 0;
     m_Font = QFont("宋体",10,QFont::Normal);

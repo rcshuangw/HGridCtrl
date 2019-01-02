@@ -23,6 +23,7 @@ public:
 
 public:
     void endEdit();
+    virtual void keyReleaseEvent(QKeyEvent *event);
 public slots:
     void onEditingFinished();
     void onTextChanged(const QString &text);

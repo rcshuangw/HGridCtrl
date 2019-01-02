@@ -4036,6 +4036,45 @@ QFont HGridCtrl::itemFont(int nRow, int nCol)
     return pCell->font();
 }
 
+
+bool HGridCtrl::setItemBorder(int nRow,int nCol,const GV_BORDER_ITEM* pItem)
+{
+    HGridCellBase* pCell = getCell(nRow, nCol);
+    Q_ASSERT(pCell);
+    if (!pCell)
+        return false;
+
+    pCell->setBorderLeftColor(QColor(pItem->strLeftBoderClr));
+    pCell->setBorderLeftStyle(pItem->nLeftBorderStyle);
+    pCell->setBorderRightColor(QColor(pItem->strRightBoderClr));
+    pCell->setBorderRightStyle(pItem->nRightBorderStyle);
+    pCell->setBorderTopColor(QColor(pItem->strTopBoderClr));
+    pCell->setBorderTopStyle(pItem->nTopBorderStyle);
+    pCell->setBorderBottomColor(QColor(pItem->strBottomBoderClr));
+    pCell->setBorderBottomStyle(pItem->nBottomBorderStyle);
+
+    return true;
+}
+
+bool HGridCtrl::itemBorder(int nRow,int nCol,GV_BORDER_ITEM* pItem)
+{
+    HGridCellBase* pCell = getCell(nRow, nCol);
+    Q_ASSERT(pCell);
+    if (!pCell)
+        return false;
+
+    pItem->strLeftBoderClr = pCell->borderLeftColor().name();
+    pItem->nLeftBorderStyle = pCell->borderLeftStyle();
+    pItem->strRightBoderClr = pCell->borderRightColor().name();
+    pItem->nRightBorderStyle = pCell->borderRightStyle();
+    pItem->strTopBoderClr = pCell->borderTopColor().name();
+    pItem->nTopBorderStyle = pCell->borderTopStyle();
+    pItem->strBottomBoderClr = pCell->borderBottomColor().name();
+    pItem->nBottomBorderStyle = pCell->borderBottomStyle();
+    return true;
+}
+
+
 bool HGridCtrl::isItemEditing(int nRow, int nCol)
 {
     HGridCellBase* pCell = getCell(nRow, nCol);

@@ -29,6 +29,11 @@ HInPlaceEdit::HInPlaceEdit(QWidget* pParent, const QRect& rect, quint32 dwStyle,
 
 }
 
+void HInPlaceEdit::keyReleaseEvent(QKeyEvent *event)
+{
+    QString strTest = "";
+}
+
 HInPlaceEdit::~HInPlaceEdit()
 {
 }
