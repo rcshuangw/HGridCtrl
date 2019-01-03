@@ -1626,7 +1626,72 @@ void HGridCtrl::validateAndModifyCellContents(int nRow, int nCol, const QString&
     }
 }
 
+//清除所有
 void HGridCtrl::clearCells(HCellRange Selection)
+{
+    for (int row = Selection.minRow(); row <= Selection.maxRow(); row++)
+    {
+        for (int col = Selection.minCol(); col <= Selection.maxCol(); col++)
+        {
+            HGridCellBase *pCell = (HGridCellBase*) getCell(row,col);
+            if(pCell->isMerged())
+            {
+                for(int mergerow = pCell->mergeRange().maxRow();mergerow >= pCell->mergeRange().minRow();mergerow--)
+                    for(int mergecol = pCell->mergeRange().maxCol();mergecol >= pCell->mergeRange().minCol();mergecol--)
+                    {
+                        if(pCell->mergeRange().maxRow()==-1 || pCell->mergeRange().maxCol()==-1)
+                            break;
+                        HGridCellBase *pMergedCell = (HGridCellBase*) getCell(mergerow,mergecol);
+                        pMergedCell->reset();
+                        pMergedCell->setGrid(this);
+                    }
+
+            }
+            else
+            {
+                pCell->reset();
+                pCell->setGrid(this);
+            }
+		}
+	}
+    refresh();
+}
+
+//格式
+void HGridCtrl::clearFormats(HCellRange Selection)
+{
+    for (int row = Selection.minRow(); row <= Selection.maxRow(); row++)
+    {
+        for (int col = Selection.minCol(); col <= Selection.maxCol(); col++)
+        {
+            HGridCellBase *pCell = (HGridCellBase*) getCell(row,col);
+            QString strText = pCell->text();
+            if(pCell->isMerged())
+            {
+                for(int mergerow = pCell->mergeRange().maxRow();mergerow >= pCell->mergeRange().minRow();mergerow--)
+                    for(int mergecol = pCell->mergeRange().maxCol();mergecol >= pCell->mergeRange().minCol();mergecol--)
+                    {
+                        if(pCell->mergeRange().maxRow()==-1 || pCell->mergeRange().maxCol()==-1)
+                            break;
+                        HGridCellBase *pMergedCell = (HGridCellBase*) getCell(mergerow,mergecol);
+                        pMergedCell->reset();
+                        pMergedCell->setGrid(this);
+                    }
+                pCell->setText(strText);
+            }
+            else
+            {
+                pCell->reset();
+                pCell->setGrid(this);
+                pCell->setText(strText);
+            }
+        }
+    }
+    refresh();
+}
+
+//文字
+void HGridCtrl::clearFormatting(HCellRange Selection)
 {
     for (int row = Selection.minRow(); row <= Selection.maxRow(); row++)
     {
@@ -1637,8 +1702,8 @@ void HGridCtrl::clearCells(HCellRange Selection)
             {
                 validateAndModifyCellContents(row, col, (""));
             }
-		}
-	}
+        }
+    }
     refresh();
 }
 
@@ -3110,6 +3175,7 @@ int HGridCtrl::insertColumn(const QString& strHeading, uint nFormat,int nColumn 
     if (m_idCurrentCell.col != -1 && nColumn < m_idCurrentCell.col)
         m_idCurrentCell.col++;
     
+    autoColumnHeader();
     resetScrollBars();//刷新滚动条
     setModified();
     return nColumn;
@@ -3189,6 +3255,7 @@ int HGridCtrl::insertRow(const QString& strHeading, int nRow )
     if (m_idCurrentCell.row != -1 && nRow < m_idCurrentCell.row)
         m_idCurrentCell.row++;
 
+    autoRowHeader();
     resetScrollBars(); //刷新滚动条
     setModified();
     return nRow;

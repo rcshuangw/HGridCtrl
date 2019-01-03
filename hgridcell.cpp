@@ -5,19 +5,11 @@ HGridCell::HGridCell(HGridCellBase *parent) : HGridCellBase(parent)
     reset();
 }
 
-/*
-HGridCell::HGridCell()
-{
-    m_plfFont = NULL;
-    CGridCell::Reset();
-}*/
-
 HGridCell::~HGridCell()
 {
     //delete m_plfFont;
 }
 
-/////////////////////////////////////////////////////////////////////////////
 void HGridCell::operator=( HGridCell& cell)
 {
     if (this != &cell) HGridCellBase::operator=(cell);
@@ -33,24 +25,24 @@ void HGridCell::reset()
     m_bEditing = false;
     m_pEditWnd = NULL;
 
-    m_nFormat = QDT_LEFT;           // Use default from CGridDefaultCell
+    m_nFormat = QDT_LEFT|QDT_VCENTER;  // Use default from CGridDefaultCell
     m_crBkClr = QColor(Qt::white);     // Background colour (or CLR_DEFAULT)
     m_crFgClr = QColor(Qt::black);     // Forground colour (or CLR_DEFAULT)
     m_nMargin = (uint)-1;              // Use default from CGridDefaultCell
     m_plfFont = QFont(QStringLiteral("宋体"),10, QFont::Normal);
     m_lParam  = quint32(0);
     m_Size    = QSize(100,25);            // Default Size
-    m_bBorder       = true;
+    m_bBorder       = false;
     m_bLeftBorder   = false;
     m_bTopBorder    = false;
     m_bRightBorder  = false;
-    m_bBottomBorder = true;
+    m_bBottomBorder = false;
 
-    m_nBorderStyle       = Qt::NoPen;
-    m_nLeftBorderStyle   = Qt::NoPen;
-    m_nTopBorderStyle    = Qt::NoPen;
-    m_nRightBorderStyle  = Qt::NoPen;
-    m_nBottomBorderStyle = Qt::NoPen;
+    m_nBorderStyle       = Qt::SolidLine;
+    m_nLeftBorderStyle   = Qt::SolidLine;
+    m_nTopBorderStyle    = Qt::SolidLine;
+    m_nRightBorderStyle  = Qt::SolidLine;
+    m_nBottomBorderStyle = Qt::SolidLine;
 
     m_crBoderClr       = QColor(Qt::black);
     m_crLeftBoderClr   = QColor(Qt::black);
@@ -60,7 +52,6 @@ void HGridCell::reset()
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// GridCell Operations
 quint32 HGridCell::format()  const
 {
     if (m_nFormat == (quint32)-1)
@@ -72,15 +63,11 @@ quint32 HGridCell::format()  const
    }
     return m_nFormat;
 }
-/*
- * 编辑的时候是生成一个QLineEdit 移动到对应的rect里面
-*/
+
 bool HGridCell::edit(int nRow, int nCol, const QRect& rect, const QPoint& point)
 {
     if ( m_bEditing )
     {
-        //if (m_pEditWnd)
-        //    m_pEditWnd->SendMessage ( WM_CHAR, nChar );
     }
     else
     {
@@ -102,14 +89,12 @@ void HGridCell::endEdit()
     {
         ((HInPlaceEdit*)m_pEditWnd)->endEdit();
     }
-
 }
 
 void HGridCell::OnEndEdit()
 {
     m_bEditing = false;
     m_pEditWnd = NULL;
-
 }
 
 /////////////////////////////////////////////////////////////////////////////

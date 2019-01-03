@@ -19,8 +19,23 @@ HInPlaceEdit::HInPlaceEdit(QWidget* pParent, const QRect& rect, quint32 dwStyle,
 
     m_Rect = rect;  // For bizarre CE bug.
     
-    setFont(((HGridCtrl*)pParent)->font());
-    setAlignment(QDT_LEFT | QDT_CENTER);
+    HGridCellBase* pCell = ((HGridCtrl*)pParent)->getCell(nRow,nColumn);
+    if(pCell)
+    {
+        setFont(pCell->font());
+        setAlignment(Qt::Alignment(pCell->format()));
+
+        QBrush myBrush;
+        QPalette palette;
+        myBrush = QBrush(pCell->textClr(),Qt::DiagCrossPattern);
+        palette.setBrush( QPalette::Text,  myBrush);
+        setPalette(palette);
+    }
+    else
+    {
+        setFont(((HGridCtrl*)pParent)->font());
+        setAlignment(QDT_LEFT | QDT_CENTER);
+    }
     setText(sInitText);
     setFocus();
     setAttribute(Qt::WA_DeleteOnClose);

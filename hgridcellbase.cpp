@@ -96,7 +96,6 @@ bool HGridCellBase::draw(QPainter* painter, int nRow, int nCol, QRect rect, bool
         // Always draw even in list mode so that we can tell where the
         // cursor is at.  Use the highlight colors though.
         //如果选择的cell背景和字体都要变化就要用此功能
-
         if(state() & GVIS_SELECTED)
         {
             TextBkClr = backClr();
@@ -159,6 +158,19 @@ bool HGridCellBase::draw(QPainter* painter, int nRow, int nCol, QRect rect, bool
         HCellID FocusCell = pGrid->focusCell();
         bool bHiliteFixed = pGrid->isTrackFocusCell() && pGrid->isValid(FocusCell) &&
                             (FocusCell.row == nRow || FocusCell.col == nCol);
+        //如果当前选择的是合并单元格，同时该单元格处在此合并单元格内
+        if(pGrid->getCell(FocusCell))
+        {
+            HCellRange mergeRange = pGrid->getCell(FocusCell)->mergeRange();
+            if(mergeRange.isValid())
+            {
+                if((nRow >= mergeRange.minRow() && nRow <= mergeRange.maxRow()) ||
+                    (nCol >= mergeRange.minCol()&& nCol <= mergeRange.maxCol()))
+                    bHiliteFixed = true;
+
+            }
+        }
+
         painter->save();
         if (bHiliteFixed)
         {
@@ -192,13 +204,13 @@ bool HGridCellBase::draw(QPainter* painter, int nRow, int nCol, QRect rect, bool
         painter->restore();
     }
 
-    if(isDrawBorder() && !isFixed() && pGrid->gridLines() != GVL_NONE)//只要上下左右任何一边有绘制 绘制表格属性为真
+    if(!isFixed() && pGrid->gridLines() != GVL_NONE)//只要上下左右任何一边有绘制 绘制表格属性为真
     {
         painter->save();
-        QPen pen(borderColor());
-        pen.setStyle(Qt::PenStyle(borderStyle()));
-        painter->setPen(pen);
-        painter->drawRect(rectBoard);
+        //QPen pen(borderColor());
+        //pen.setStyle(Qt::PenStyle(borderStyle()));
+        //painter->setPen(pen);
+        //painter->drawRect(rectBoard);
 
         if(isDrawBorderLeft())
         {
