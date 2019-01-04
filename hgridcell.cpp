@@ -25,11 +25,11 @@ void HGridCell::reset()
     m_bEditing = false;
     m_pEditWnd = NULL;
 
-    m_nFormat = QDT_LEFT|QDT_VCENTER;  // Use default from CGridDefaultCell
+    m_nFormat = QDT_LEFT|QDT_VCENTER|QDT_SINGLELINE|QDT_NOPREFIX;  // Use default from CGridDefaultCell
     m_crBkClr = QColor(Qt::white);     // Background colour (or CLR_DEFAULT)
     m_crFgClr = QColor(Qt::black);     // Forground colour (or CLR_DEFAULT)
     m_nMargin = (uint)-1;              // Use default from CGridDefaultCell
-    m_plfFont = QFont(QStringLiteral("宋体"),10, QFont::Normal);
+    m_plfFont = QFont(QStringLiteral("宋体"),11, QFont::Normal);
     m_lParam  = quint32(0);
     m_Size    = QSize(100,25);            // Default Size
     m_bBorder       = false;
@@ -102,12 +102,12 @@ void HGridCell::OnEndEdit()
 HGridDefaultCell::HGridDefaultCell()
 {
 
-    m_nFormat = QDT_CENTER|QDT_SINGLELINE|QDT_NOPREFIX;
+    m_nFormat = QDT_LEFT|QDT_VCENTER|QDT_SINGLELINE|QDT_NOPREFIX;
     m_crFgClr = QColor(Qt::black);
     m_crBkClr = QColor(Qt::white);
     m_Size    = QSize(100,25);
     m_dwStyle = 0;
-    m_Font = QFont("宋体",10,QFont::Normal);
+    m_Font = QFont("宋体",11,QFont::Normal);
 }
 
 HGridDefaultCell::~HGridDefaultCell()

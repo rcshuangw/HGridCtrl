@@ -275,7 +275,7 @@ bool HGridCellBase::textRect( QRect& rect)
     return true;
 }
 
-QSize HGridCellBase::textExtent(const QString& strText)
+QSize HGridCellBase::textExtent(const QRect& rect,const QString& strText)
 {
     //初始化单元格的时候
     HGridCtrl* pGrid = grid();
@@ -290,38 +290,21 @@ QSize HGridCellBase::textExtent(const QString& strText)
 
     QSize size;
     int nFormat = format();
-    QFontMetrics fontMetrics(font());
-    // If the cell is a multiline cell, then use the width of the cell
-    // to get the height
-    //如果多行文字，则把文字先排列成1行 然后求出size
     if ((nFormat & QDT_WORDBREAK) && !(nFormat & QDT_SINGLELINE))
     {
-        QString str = szText;
-        int nMaxWidth = 0;
-        while (true)
-        {
-            int nPos = str.indexOf(('\n'));
-            QString TempStr = (nPos < 0)? str : str.left(nPos);
-            int nTempWidth = fontMetrics.width(TempStr);
-            if (nTempWidth > nMaxWidth)
-                nMaxWidth = nTempWidth;
-
-            if (nPos < 0)
-                break;
-            str = str.mid(nPos + 1);    // Bug fix by Thomas Steinborn
-        }
-        szText = str;
+            QString str = szText;
     }
-
-    size = fontMetrics.size(nFormat,szText);
-    size += QSize(4*margin(), 2*margin());
+    QFontMetrics fontMetrics(font());
+    QRect textRect = fontMetrics.boundingRect(rect,nFormat,strText);
+    size += QSize(textRect.width(),textRect.height());
+    size += QSize(1, 1);
     return size;
 }
 
 //单元格有文字和图片的size
-QSize HGridCellBase::cellExtent()
+QSize HGridCellBase::cellExtent(const QRect& rect)
 {
-    QSize size = textExtent(text());
+    QSize size = textExtent(rect,text());
     QSize imageSize(0,0);
     if (image() >= 0)
     {

@@ -3097,7 +3097,7 @@ bool HGridCtrl::setColumnCount(int nCols)
 }
 
 // Insert a column at a given position, or add to end of columns (if nColumn = -1)
-int HGridCtrl::insertColumn(const QString& strHeading, uint nFormat,int nColumn  )
+int HGridCtrl::insertColumn(const QString& strHeading, quint32 nFormat,int nColumn  )
 {
     if (nColumn >= 0 && nColumn < m_nFixedCols)
     {
@@ -3170,7 +3170,10 @@ int HGridCtrl::insertColumn(const QString& strHeading, uint nFormat,int nColumn 
         setItemFormat(row, nColumn, nFormat);
     
     // initialized column width
-    m_arColWidths[nColumn] = textExtent(0, nColumn, strHeading).width();
+    if (!strHeading.isEmpty())
+         m_arColWidths[nColumn] = textExtent(0, nColumn, strHeading).width();
+    else
+         m_arColWidths[nColumn] = m_cellFixedRowDef.width();
     
     if (m_idCurrentCell.col != -1 && nColumn < m_idCurrentCell.col)
         m_idCurrentCell.col++;
@@ -3383,12 +3386,8 @@ bool HGridCtrl::deleteColumn(int nColumn)
             GRID_ROW* pRow = m_RowData[row];
             if (!pRow)
                 return false;
-
-            //pRow->removeAt(nColumn);
             destroyCell(row, nColumn);
-        
             pRow->removeAt(nColumn);
-            //注意以上做法如果不对就将removeAt移到上面
         }
     }
     m_arColWidths.removeAt(nColumn);
@@ -3401,9 +3400,9 @@ bool HGridCtrl::deleteColumn(int nColumn)
     else if (nColumn < m_idCurrentCell.col)
         m_idCurrentCell.col--;
     
+    autoColumnHeader();
     resetScrollBars();//刷新滚动条
     setModified();
-
     return true;
 }
 
@@ -3415,13 +3414,13 @@ bool HGridCtrl::deleteRow(int nRow)
     resetSelectedRange();
     //if (!isVirtualMode())
     {
-        //GRID_ROW* pRow = m_RowData[nRow];
-        GRID_ROW* pRow = m_RowData.takeAt(nRow);;
+        GRID_ROW* pRow = m_RowData[nRow];
         if (!pRow)
             return false;
         for (int col = 0; col < columnCount(); col++)
             destroyCell(nRow, col);
         delete pRow;
+        m_RowData.removeAt(nRow);
     }
 
     m_arRowHeights.removeAt(nRow);
@@ -3434,6 +3433,7 @@ bool HGridCtrl::deleteRow(int nRow)
     else if (nRow < m_idCurrentCell.row)
         m_idCurrentCell.row--;
     
+    autoRowHeader();
     resetScrollBars();//刷新滚动条
     setModified();   
     return true;
@@ -4227,7 +4227,6 @@ int HGridCtrl::fixedRowHeight() const
 
 int HGridCtrl::fixedColumnWidth() const
 {
-
     int nWidth = 0;
     for (int i = 0; i < m_nFixedCols; i++)
         nWidth += columnWidth(i);
@@ -4260,8 +4259,10 @@ bool HGridCtrl::autoSizeColumn(int nCol, uint nAutoSizeStyle ,bool bResetScroll 
     for (int nRow = nStartRow; nRow <= nEndRow; nRow++)
     {
         HGridCellBase* pCell = getCell(nRow, nCol);
+        QRect rect;
+        cellRect(nRow,nCol,rect);
         if (pCell)
-            size = pCell->cellExtent();
+            size = pCell->cellExtent(rect);
         if (size.width() > nWidth)
             nWidth = size.width();
     }
@@ -4297,8 +4298,10 @@ bool HGridCtrl::autoSizeRow(int nRow, bool bResetScroll )
     for (int nCol = 0; nCol < nNumColumns; nCol++)
     {
         HGridCellBase* pCell = getCell(nRow, nCol);
+        QRect rect;
+        cellRect(nRow,nCol,rect);
         if (pCell)
-            size = pCell->cellExtent();
+            size = pCell->cellExtent(rect);
         if (size.height() > nHeight)
             nHeight = size.height();
     }
@@ -4374,8 +4377,9 @@ void HGridCtrl::autoSize(uint nAutoSizeStyle )
                 if( rowHeight( nRow) > 0 )
                 {
                     HGridCellBase* pCell = getCell(nRow, nCol);
+                    QRect rect(0,0,rowHeight(nRow),columnWidth(nCol));
                     if (pCell)
-                        size = pCell->cellExtent();
+                        size = pCell->cellExtent(rect);
                     if (size.width() >(int) m_arColWidths[nCol])
                         m_arColWidths[nCol] = size.width();
                     if (size.height() >(int) m_arRowHeights[nRow])
@@ -5845,10 +5849,11 @@ void HGridCtrl::onFixedColumnClick(HCellID& cell)
 QSize HGridCtrl::textExtent(int nRow, int nCol, const QString& str)
 {
     HGridCellBase* pCell = getCell(nRow, nCol);
+    QRect rect(0,0,rowHeight(nRow),columnWidth(nCol));
     if (!pCell)
         return QSize(0, 0);
     else
-        return pCell->textExtent(str);
+        return pCell->textExtent(rect,str);
 }
 
 // virtual
