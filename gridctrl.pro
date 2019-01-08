@@ -19,7 +19,8 @@ SOURCES +=  hgridcellbase.cpp \
             hgridcell.cpp   \
             hgridctrl.cpp \
             hinplaceedit.cpp \
-            hgridctrlcommand.cpp
+            hgridctrlcommand.cpp \
+    hcellrange.cpp
             #main.cpp
 
 HEADERS  +=    \

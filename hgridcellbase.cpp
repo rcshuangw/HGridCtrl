@@ -10,6 +10,39 @@ HGridCellBase::~HGridCellBase()
 
 }
 
+void HGridCellBase::load(int v,QDataStream* ds)
+{
+    if(!ds) return;
+    int n;
+    *ds>>n;
+    m_nState = n;
+    *ds>>n;
+    m_MergeCellID.row = n;
+    *ds>>n;
+    m_MergeCellID.col = n;
+    bool b;
+    *ds>>b;
+    m_bMergeWithOthers = b;
+    *ds>>b;
+    m_bShow = b;
+
+    m_MergeRange.set();
+    *ds>>m_MergeRange;
+
+}
+
+void HGridCellBase::save(int v,QDataStream* ds)
+{
+    if(!ds) return;
+    int n;
+    *ds<<(quint32)m_nState;
+    *ds<<(int)m_MergeCellID.row;
+    *ds<<(int)m_MergeCellID.col;
+    *ds<<(bool)m_bMergeWithOthers;
+    *ds<<(bool)m_bShow;
+    *ds<<m_MergeRange;
+}
+
 void HGridCellBase::operator=( HGridCellBase& cell)
 {
     if (this == &cell) return;
@@ -103,17 +136,17 @@ bool HGridCellBase::draw(QPainter* painter, int nRow, int nCol, QRect rect, bool
             bEraseBkgnd = true;
         }
 
-        if (bEraseBkgnd)
-        {
-            QBrush brush(TextBkClr);
-            painter->fillRect(rect, brush);
-        }
-
         // Don't adjust frame rect if no grid lines so that the
         // whole cell is enclosed.
         if(pGrid->gridLines() != GVL_NONE)
         {
             rect.adjust(0,0,-2,-2);
+        }
+
+        if (bEraseBkgnd)
+        {
+            QBrush brush(TextBkClr);
+            painter->fillRect(rect, brush);
         }
 
         if (pGrid->isFrameFocusCell())

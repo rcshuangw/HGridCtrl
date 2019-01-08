@@ -1115,7 +1115,7 @@ void HGridCtrl::onDraw(QPainter* painter)
                         QRect mergerect=rect;
                         if(cellRangeRect(pMergedCell->mergeRange(),mergerect))
 						{
-                            mergerect.adjust(0,0,1,1);
+                            mergerect.adjust(0,0,1,0);
                             pMergedCell->setCoords(pCell->mergeCellID().row,pCell->mergeCellID().col);
                             pMergedCell->draw(painter, pCell->mergeCellID().row,pCell->mergeCellID().col, mergerect, true);
 						}
@@ -1126,7 +1126,7 @@ void HGridCtrl::onDraw(QPainter* painter)
                     QRect mergerect=rect;
                     if(cellRangeRect(pCell->mergeRange(),mergerect))
 					{
-                        mergerect.adjust(0,0,1,1);
+                        mergerect.adjust(0,0,1,0);
                         pCell->setCoords(row,col);
                         pCell->draw(painter, row, col, mergerect, true);
 					}
@@ -3797,6 +3797,27 @@ bool HGridCtrl::setItem(const GV_ITEM* pItem)
         pCell->setFont(pItem->lfFont);
     if( pItem->mask & GVIF_MARGIN)
         pCell->setMargin( pItem->nMargin);
+    if(pItem->mask & GVIF_BORDER)
+    {
+        pCell->setDrawBorderLeft(pItem->bLeftBorder);
+        pCell->setBorderLeftStyle(pItem->nLeftBorderStyle);
+        pCell->setBorderLeftColor(pItem->crLeftBoderClr);
+        pCell->setDrawBorderRight(pItem->bRightBorder);
+        pCell->setBorderRightStyle(pItem->nRightBorderStyle);
+        pCell->setBorderRightColor(pItem->crRightBoderClr);
+        pCell->setDrawBorderTop(pItem->bTopBorder);
+        pCell->setBorderTopStyle(pItem->nTopBorderStyle);
+        pCell->setBorderTopColor(pItem->crTopBoderClr);
+        pCell->setDrawBorderBottom(pItem->bBottomBorder);
+        pCell->setBorderBottomStyle(pItem->nBottomBorderStyle);
+        pCell->setBorderBottomColor(pItem->crBottomBoderClr);
+    }
+    if(pItem->mask & GVIF_MERGE)
+    {
+        pCell->setShow(pItem->bShow);
+        pCell->setMergeRange(pItem->MergeRange);
+        pCell->setMergeCellID(pItem->MergeCellID);
+    }
     
     return true;
 }
@@ -3827,6 +3848,27 @@ bool HGridCtrl::item(GV_ITEM* pItem)
         pItem->lfFont  = pCell->font();
     if( pItem->mask & GVIF_MARGIN)
         pItem->nMargin = pCell->margin();
+    if(pItem->mask & GVIF_BORDER)
+    {
+        pItem->bLeftBorder = pCell->isDrawBorderLeft();
+        pItem->nLeftBorderStyle = pCell->borderLeftStyle();
+        pItem->crLeftBoderClr = pCell->borderLeftColor();
+        pItem->bTopBorder = pCell->isDrawBorderTop();
+        pItem->nTopBorderStyle = pCell->borderTopStyle();
+        pItem->crTopBoderClr = pCell->borderTopColor();;
+        pItem->bRightBorder = pCell->isDrawBorderRight();
+        pItem->nRightBorderStyle = pCell->borderRightStyle();
+        pItem->crRightBoderClr = pCell->borderRightColor();;
+        pItem->bBottomBorder = pCell->isDrawBorderBottom();
+        pItem->nBottomBorderStyle = pCell->borderBottomStyle();
+        pItem->crBottomBoderClr = pCell->borderBottomColor();
+    }
+    if(pItem->mask & GVIF_MERGE)
+    {
+        pItem->bShow = pCell->isShow();
+        pItem->MergeRange = pCell->mergeRange();
+        pItem->MergeCellID = pCell->mergeCellID();
+    }
 
     return true;
 }
@@ -4786,7 +4828,7 @@ bool HGridCtrl::isCellSelected(HCellID &cell) const
 
 bool HGridCtrl::isCellSelected(int nRow, int nCol) const
 {
-    if (isVirtualMode())//保留
+    /*if (isVirtualMode())//保留
     {   
         if (!isSelectable())
             return false;
@@ -4796,7 +4838,7 @@ bool HGridCtrl::isCellSelected(int nRow, int nCol) const
         cell = m_SelectedCellMap.value(key);
         return (cell.isValid());
     }
-    else
+    else*/
         return isSelectable() && ((itemState(nRow, nCol) & GVIS_SELECTED) == GVIS_SELECTED);
 }
 
@@ -5601,10 +5643,178 @@ the window origin is setup before calling
 
 /////////////////////////////////////////////////////////////////////////////
 // CGridCtrl persistance
+void HGridCtrl::load(int v,QDataStream* ds)
+{                               // The callback function
+    if(!ds) return;
+    int n;
+    *ds>>n;
+    m_nGridLines = n;
+    bool b;
+    *ds>>b;
+    m_bShowGrid = b;
+    *ds>>b;
+    m_bEditable = b;
+    *ds>>b;
+    m_bModified = b;
+    *ds>>b;
+    m_bAllowDragAndDrop = b;
+    *ds>>b;
+    m_bListMode = b;
+    *ds>>b;
+    m_bSingleRowSelection = b;
+    *ds>>b;
+    m_bSingleColSelection = b;
+    *ds>>b;
+    m_bAllowDraw = b;
+    *ds>>b;
+    m_bEnableSelection = b;
+    *ds>>b;
+    m_bFixedRowSelection = b;
+    *ds>>b;
+    m_bFixedColumnSelection = b;
+    *ds>>b;
+    m_bSortOnClick = b;
+    *ds>>b;
+    m_bHandleTabKey = b;
+    *ds>>b;
+    m_bTitleTips = b;
+    *ds>>n;
+    m_nBarState= n;
+    *ds>>b;
+    m_bWysiwygPrinting = b;
+    *ds>>b;
+    m_bHiddenRowUnhide = b;
+    *ds>>b;
+    m_bHiddenColUnhide = b;
+    *ds>>b;
+    m_bAllowRowHide = b;
+    *ds>>b;
+    m_bAllowColHide = b;
+    *ds>>b;
+    m_bAutoSizeSkipColHdr = b;
+    *ds>>b;
+    m_bTrackFocusCell = b;
+    *ds>>b;
+    m_bFrameFocus = b;
+    uint un;
+    *ds>>un;
+    m_nAutoSizeColumnStyle = un;
 
+    *ds>>n;
+    m_nRows = n;
+    *ds>>n;
+    m_nFixedRows = n;
+    *ds>>n;
+    m_nCols = n;
+    *ds>>n;
+    m_nFixedCols = n;
+    *ds>>n;
+    m_nVScrollMax = n;
+    *ds>>n;
+    m_nHScrollMax = n;
+
+    *ds>>n;
+    m_nHeaderHeight = n;
+    *ds>>n;
+    m_nFooterHeight = n;
+    *ds>>n;
+    m_nLeftMargin = n;
+    *ds>>n;
+    m_nRightMargin = n;
+    *ds>>n;
+    m_nTopMargin = n;
+    *ds>>n;
+    m_nBottomMargin = n;
+    *ds>>n;
+    m_nGap = n;
+
+    m_arRowHeights.clear();
+    *ds>>m_arRowHeights;
+    m_arColWidths.clear();
+    *ds>>m_arColWidths;
+
+    //读完之后需要创建行列表格，设置行列表格的行高列宽之后，才能继续读取单元格的内容，否则没有创建单元格是错误的
+    setRowCount(m_nRows);
+    setColumnCount(m_nCols);
+    for(int row = 0; row < rowCount();row++)
+        setRowHeight(row,m_arRowHeights[row]);
+    for(int col = 0; col < columnCount();col++)
+        setColumnWidth(col,m_arColWidths[col]);
+
+    for(int row = 0; row < rowCount();row++)
+    {
+        for(int col = 0; col < columnCount();col++)
+        {
+            HGridCellBase* pCell = getCell(row,col);
+            if(pCell)
+            {
+                pCell->load(v,ds);
+            }
+        }
+    }
+}
+
+void HGridCtrl::save(int v,QDataStream* ds)
+{
+    if(!ds) return;
+    *ds<<(int)m_nGridLines;
+    *ds<<(int)m_bShowGrid;
+    *ds<<(int)m_bEditable;
+    *ds<<(int)m_bModified;
+    *ds<<(int)m_bAllowDragAndDrop;
+    *ds<<(int)m_bListMode;
+    *ds<<(int)m_bSingleRowSelection;
+    *ds<<(int)m_bSingleColSelection;
+    *ds<<(int)m_bAllowDraw ;
+    *ds<<(int)m_bEnableSelection ;
+    *ds<<(int)m_bFixedRowSelection;
+    *ds<<(int)m_bFixedColumnSelection;
+    *ds<<(int)m_bSortOnClick;
+    *ds<<(int)m_bHandleTabKey;
+    *ds<<(int)m_bTitleTips;
+    *ds<<(int)m_nBarState;
+    *ds<<(int)m_bWysiwygPrinting;
+    *ds<<(int)m_bHiddenRowUnhide;
+    *ds<<(int)m_bHiddenColUnhide;
+    *ds<<(int)m_bAllowRowHide;
+    *ds<<(int)m_bAllowColHide;
+    *ds<<(int)m_bAutoSizeSkipColHdr;
+    *ds<<(int)m_bTrackFocusCell;
+    *ds<<(int)m_bFrameFocus;
+
+    *ds<<(uint)m_nAutoSizeColumnStyle;
+
+    *ds<<(int)m_nRows;
+    *ds<<(int)m_nFixedRows;
+    *ds<<(int)m_nCols;
+    *ds<<(int)m_nFixedCols;
+    *ds<<(int)m_nVScrollMax;
+    *ds<<(int)m_nHScrollMax;
+    *ds<<(int)m_nHeaderHeight;
+    *ds<<(int)m_nFooterHeight;
+    *ds<<(int)m_nLeftMargin;
+    *ds<<(int)m_nRightMargin;
+    *ds<<(int)m_nTopMargin;
+    *ds<<(int)m_nBottomMargin;
+    *ds<<(int)m_nGap;
+
+    for(int row = 0; row < rowCount();row++)
+    {
+        for(int col = 0; col < columnCount();col++)
+        {
+            HGridCellBase* pCell = getCell(row,col);
+            if(pCell)
+            {
+                pCell->save(v,ds);
+            }
+        }
+    }
+}
+
+/*
 bool HGridCtrl::save(const QString& filename, char chSeparator)
 {
-    /*CStdioFile File;
+    CStdioFile File;
     CFileException ex;
 	CString strSeparator(chSeparator);
 
@@ -5627,13 +5837,13 @@ bool HGridCtrl::save(const QString& filename, char chSeparator)
         }
 
         File.Close();
-    }*/
+    }
     return true;
 }
 
 bool HGridCtrl::load(const QString& filename, char chSeparator)
 {
-    /*if (GetVirtualMode())
+    if (GetVirtualMode())
         return false;
 
     TCHAR *token, *end;
@@ -5726,11 +5936,11 @@ bool HGridCtrl::load(const QString& filename, char chSeparator)
         AfxMessageBox(_T("Unable to load grid data"));
         return false;
     }
-    END_CATCH*/
+    END_CATCH
 
     return true;
 }
-
+*/
 /*
 /////////////////////////////////////////////////////////////////////////////
 // CGridCtrl overrideables
