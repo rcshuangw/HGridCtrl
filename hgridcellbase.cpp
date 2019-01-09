@@ -237,14 +237,10 @@ bool HGridCellBase::draw(QPainter* painter, int nRow, int nCol, QRect rect, bool
         painter->restore();
     }
 
-    if(!isFixed() && pGrid->gridLines() != GVL_NONE)//只要上下左右任何一边有绘制 绘制表格属性为真
+    //绘制边框
+    if(!isFixed() && pGrid->gridLines() != GVL_NONE)
     {
         painter->save();
-        //QPen pen(borderColor());
-        //pen.setStyle(Qt::PenStyle(borderStyle()));
-        //painter->setPen(pen);
-        //painter->drawRect(rectBoard);
-
         if(isDrawBorderLeft())
         {
             QPen leftPen(borderLeftColor());
@@ -281,13 +277,13 @@ bool HGridCellBase::draw(QPainter* painter, int nRow, int nCol, QRect rect, bool
 
     rect.adjust(margin(),margin(),0,0);
 
-    // We want to see '&' characters so use DT_NOPREFIX
     textRect(rect);
     painter->setFont(font());
     painter->drawText(rect,format()|QDT_NOPREFIX,text());
     painter->restore();
     return true;
 }
+
 //对rect进行判断如果是图片就要重新计算rect,如果不是照片就正常返回
 bool HGridCellBase::textRect( QRect& rect)
 {
@@ -308,6 +304,7 @@ bool HGridCellBase::textRect( QRect& rect)
     return true;
 }
 
+//获取文字的长宽
 QSize HGridCellBase::textExtent(const QRect& rect,const QString& strText)
 {
     //初始化单元格的时候
@@ -321,15 +318,10 @@ QSize HGridCellBase::textExtent(const QRect& rect,const QString& strText)
         return QSize(pDefCell->width(), pDefCell->height());
     }
 
-    QSize size;
     int nFormat = format();
-    if ((nFormat & QDT_WORDBREAK) && !(nFormat & QDT_SINGLELINE))
-    {
-            QString str = szText;
-    }
     QFontMetrics fontMetrics(font());
     QRect textRect = fontMetrics.boundingRect(rect,nFormat,strText);
-    size += QSize(textRect.width(),textRect.height());
+    QSize size = QSize(textRect.width(),textRect.height());
     size += QSize(1, 1);
     return size;
 }
@@ -368,29 +360,26 @@ bool HGridCellBase::validateEdit(QString& str)
 bool HGridCellBase::printCell(QPainter* pDC, int nRow, int nCol, QRect& rect)
 {
     //Used for merge cells
-    /*
-    if(	m_Hide && !IsMerged())
+/*
+    if(	!isShow() && !isMerged())
     {
-        return TRUE;
-    }*/
+        return true;
+    }
 
-   /* QColor crFG, crBG;
+    QColor crFG, crBG;
     GV_ITEM Item;
 
     HGridCtrl* pGrid = grid();
     if (!pGrid || !pDC)
         return false;
 
-    if( rect.width() <= 0 || rect.height() <= 0)  // prevents imagelist item from drawing even
-        return false;           //  though cell is hidden
+    if( rect.width() <= 0 || rect.height() <= 0)
+        return false;
 
     pDC->save();
-
-    //Used for merge cells
-    //by Huang Wei
-    rect.InflateRect(1,1);
-    pDC->Rectangle(rect);
-    rect.DeflateRect(1,1);
+    //rect.InflateRect(1,1);
+    //pDC->Rectangle(rect);
+    //rect.DeflateRect(1,1);
 
 
     crBG = QColor(QCLR_DEFAULT);

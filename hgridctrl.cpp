@@ -4623,8 +4623,10 @@ void HGridCtrl::setVirtualMode(bool bVirtual)
         setAutoSizeStyle(GVS_HEADER);
         setFixedColumnSelection(false);
         setFixedRowSelection(false);
-        setFixedColumnCount(0);
-        setFixedRowCount(1);
+        //if(!isVerticalHeader())
+        //    setFixedColumnCount(0);
+        //if(!isHorizontalHeader())
+        //    setFixedRowCount(0);
         //enableHorizontalHeader(false);
         //enableVerticalHeader(false);
 
