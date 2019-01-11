@@ -359,16 +359,12 @@ bool HGridCellBase::validateEdit(QString& str)
 //表格绘制都用行列方式
 bool HGridCellBase::printCell(QPainter* pDC, int nRow, int nCol, QRect& rect)
 {
-    //Used for merge cells
-/*
     if(	!isShow() && !isMerged())
     {
         return true;
     }
 
     QColor crFG, crBG;
-    GV_ITEM Item;
-
     HGridCtrl* pGrid = grid();
     if (!pGrid || !pDC)
         return false;
@@ -377,54 +373,17 @@ bool HGridCellBase::printCell(QPainter* pDC, int nRow, int nCol, QRect& rect)
         return false;
 
     pDC->save();
-    //rect.InflateRect(1,1);
-    //pDC->Rectangle(rect);
-    //rect.DeflateRect(1,1);
-
+    rect.adjust(-1,-1,1,1);
+    pDC->drawRect(rect);
+    rect.adjust(1,1,-1,-1);
 
     crBG = QColor(QCLR_DEFAULT);
     crFG = QColor(0, 0, 0);
-    //带阴影绘制表格
+    //带颜色打印
     if (pGrid->GetShadedPrintOut())
     {
-        // Get the default cell implementation for this kind of cell. We use it if this cell
-        // has anything marked as "default"
-        HGridDefaultCell *pDefaultCell = (HGridDefaultCell*) defaultCell();
-        if (!pDefaultCell)
-            return false;
-
-        // Use custom color if it doesn't match the default color and the
-        // default grid background color.  If not, leave it alone.
-        if(isFixed())
-            crBG = (backClr() != QColor(QCLR_DEFAULT)) ? backClr() : pDefaultCell->backClr();
-        else
-            crBG = (backClr() != QColor(QCLR_DEFAULT) && backClr() != pDefaultCell->backClr()) ? backClr() : QColor(CLR_DEFAULT);
-
-        // Use custom color if the background is different or if it doesn't
-        // match the default color and the default grid text color.
-        if(isFixed())
-            crFG = (backClr() != QColor(QCLR_DEFAULT)) ? textClr() : pDefaultCell->textClr();
-        else
-            crFG = (backClr() != QColor(QCLR_DEFAULT)) ? textClr() : pDefaultCell->textClr();
-
-        // If not printing on a color printer, adjust the foreground color
-        // to a gray scale if the background color isn't used so that all
-        // colors will be visible.  If not, some colors turn to solid black
-        // or white when printed and may not show up.  This may be caused by
-        // coarse dithering by the printer driver too (see image note below).
-        //if(pDC->GetDeviceCaps(NUMCOLORS) == 2 && crBG == CLR_DEFAULT)
-        //    crFG = RGB(GetRValue(crFG) * 0.30, GetGValue(crFG) * 0.59,
-       //         GetBValue(crFG) * 0.11);
-
-        // Only erase the background if the color is not the default
-        // grid background color.
-        if(crBG != QColor(QCLR_DEFAULT))
-        {
-            //QBrush brush(crBG);
-            //rect.right++; rect.bottom++;
-            //pDC->FillRect(rect, &brush);
-            //rect.right--; rect.bottom--;
-        }
+        crBG = backClr();
+        crFG = textClr();
     }
     else
     {
@@ -438,32 +397,72 @@ bool HGridCellBase::printCell(QPainter* pDC, int nRow, int nCol, QRect& rect)
     //设置字体
     pDC->setFont(font());
 
-    // Draw lines only when wanted on fixed cells.  Normal cell grid lines
-    // are handled in OnPrint.
+    QRect rectBoard = rect;
+    //绘制表格
+    if(!isFixed() && pGrid->gridLines() != GVL_NONE)
+    {
+        pDC->save();
+        if(isDrawBorderLeft())
+        {
+            QPen leftPen(pGrid->GetShadedPrintOut()?borderLeftColor():crBG);
+            leftPen.setStyle(Qt::PenStyle(borderLeftStyle()));
+            pDC->setPen(leftPen);
+            pDC->drawLine(QPoint(rectBoard.left(),rectBoard.top()),QPoint(rectBoard.left(),rectBoard.bottom()));
+        }
+
+        if(isDrawBorderRight())
+        {
+            QPen rightPen(pGrid->GetShadedPrintOut()?borderRightColor():crBG);
+            rightPen.setStyle(Qt::PenStyle(borderRightStyle()));
+            pDC->setPen(rightPen);
+            pDC->drawLine(QPoint(rectBoard.right(),rectBoard.top()),QPoint(rectBoard.right(),rectBoard.bottom()));
+        }
+
+        if(isDrawBorderTop())
+        {
+            QPen topPen(pGrid->GetShadedPrintOut()?borderTopColor():crBG);
+            topPen.setStyle(Qt::PenStyle(borderTopStyle()));
+            pDC->setPen(topPen);
+            pDC->drawLine(QPoint(rectBoard.left(),rectBoard.top()),QPoint(rectBoard.right(),rectBoard.top()));
+        }
+
+        if(isDrawBorderBottom())
+        {
+            QPen bottomPen(pGrid->GetShadedPrintOut()?borderBottomColor():crBG);
+            bottomPen.setStyle(Qt::PenStyle(borderBottomStyle()));
+            pDC->setPen(bottomPen);
+            pDC->drawLine(QPoint(rectBoard.left(),rectBoard.bottom()),QPoint(rectBoard.right(),rectBoard.bottom()));
+        }
+        pDC->restore();
+    }
+
+    //绘制行列头的
     if(pGrid->gridLines() != GVL_NONE && isFixed())
     {
         QPen lightpen(QColor(QCOLOR_3DHIGHLIGHT),1,Qt::SolidLine);
         QPen darkpen(QColor(QCOLOR_3DDKSHADOW),1,Qt::SolidLine);
 
-        painter->setPen(lightpen);
+        pDC->setPen(lightpen);
         QPainterPath fixPath;
         fixPath.moveTo(rect.right(),rect.top());
         fixPath.lineTo(rect.left(), rect.top());
         fixPath.lineTo(rect.left(), rect.bottom());
-        painter->drawPath(fixPath);
+        pDC->drawPath(fixPath);
 
-        painter->setPen(darkpen);
+        pDC->setPen(darkpen);
         QPainterPath fix1Path;
         fix1Path.moveTo(rect.right(),rect.top());
         fix1Path.lineTo(rect.right(), rect.bottom());
         fix1Path.lineTo(rect.left(), rect.bottom());
-        painter->drawPath(fix1Path);
+        pDC->drawPath(fix1Path);
 
-        rect.DeflateRect(1,1);
+        rect.adjust(1,1,-1,-1);
     }
 
-    rect.DeflateRect(GetMargin(), 0);
 
+    rect.adjust(margin(),0,-margin(), 0);
+
+    /*
     if(pGrid->GetImageList() && GetImage() >= 0)
     {
         // NOTE: If your printed images look like fuzzy garbage, check the
@@ -479,15 +478,13 @@ bool HGridCellBase::printCell(QPainter* pDC, int nRow, int nCol, QRect& rect)
             pGrid->GetImageList()->Draw(pDC, GetImage(), rect.TopLeft(), ILD_NORMAL);
             rect.left += nImageWidth+GetMargin();
         }
-    }
+    }*/
 
     // Draw without clipping so as not to lose text when printed for real
     // DT_NOCLIP removed 01.01.01. Slower, but who cares - we are printing!
 
     pDC->drawText(rect,format() | QDT_NOPREFIX,text());
-
-    pDC->restore();*/
-
+    pDC->restore();
     return true;
 }
 

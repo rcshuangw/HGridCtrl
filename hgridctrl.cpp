@@ -4,8 +4,8 @@
 //
 //
 /////////////////////////////////////////////////////////////////////////////
-
 #include "hgridctrl.h"
+#include <QShortcut>
 uint getMouseScrollLines()
 {
     uint nScrollLines = 3;            // reasonable default
@@ -145,6 +145,7 @@ HGridCtrl::HGridCtrl(int nRows, int nCols, int nFixedRows, int nFixedCols,QWidge
 
     connect(horizontalScrollBar(),&QScrollBar::valueChanged,this,&HGridCtrl::onHorizontalScrollBarChanged);
     connect(verticalScrollBar(),&QScrollBar::valueChanged,this,&HGridCtrl::onVerticalScrollBarChanged);
+    initGridCtrl();
 }
 
 //no
@@ -168,6 +169,34 @@ HGridCtrl::~HGridCtrl()
 #endif
 */
 }
+
+void HGridCtrl::initGridCtrl()
+{
+    QShortcut *shortcut = new QShortcut(QKeySequence::Cut,this);//快捷键F3绑定删除操作
+    QObject::connect(shortcut, SIGNAL(activated()), this, SLOT(cut()));
+
+}
+
+void HGridCtrl::cut()
+{
+    onEditCut();
+   /*
+        case Qt::Key_A:
+            onEditSelectAll();
+            break;*/
+
+}
+
+void HGridCtrl::paste()
+{
+    onEditPaste();
+}
+
+void HGridCtrl::copy()
+{
+    onEditCopy();
+}
+
 
 //ok
 void HGridCtrl::setupDefaultCells()
@@ -347,9 +376,8 @@ HCellID HGridCtrl::setFocusCell(int nRow, int nCol)
 void HGridCtrl::keyReleaseEvent(QKeyEvent *event)
 {
 /*
- * Qt滚动条是有相关自动实现的部分，但除了这部分其他的如ctrl键等是没有的需要自己修改
-注意对于里面特殊的按键处理没有调用QWidget类的keyReleaseEvent来处理
-而是通过自己调整滚动工作条即可。
+ * Qt对复合键采用这种方式不是太好，此处涉及到复合键全部移除来单独实现
+ * 此处仅时间对单个按键的操作
 */
     if (!isValid(m_idCurrentCell))
     {
@@ -361,26 +389,6 @@ void HGridCtrl::keyReleaseEvent(QKeyEvent *event)
     bool bChangeLine = false;
     bool bHorzScrollAction = false;
     bool bVertScrollAction = false;
-    if (Qt::ControlModifier == event->modifiers())
-    {
-        switch (event->key())
-        {
-        case Qt::Key_A:
-            onEditSelectAll();
-            break;
-#ifndef QT_NO_CLIPBOARD
-        case Qt::Key_X:
-            onEditCut();
-            break;
-        case Qt::Key_C:
-            onEditCopy();
-            break;
-        case Qt::Key_V:
-            onEditPaste();
-            break;
-#endif
-        }
-    }
 
     bool bFoundVisible;
     int iOrig;
@@ -5014,8 +5022,8 @@ void HGridCtrl::resizeEvent(QResizeEvent *event)
 // CGridCtrl Mouse stuff
 void HGridCtrl::mousePressEvent(QMouseEvent *event)
 {
-    qDebug()<<"mousePressEvent";
-
+    if(Qt::LeftButton == event->button())
+        m_bLMouseButtonDown   = true;
 #ifdef GRIDCONTROL_USE_TITLETIPS
     // EFW - Bug Fix
     //m_TitleTip.Hide();  // hide any titletips
@@ -5026,7 +5034,6 @@ void HGridCtrl::mousePressEvent(QMouseEvent *event)
     QAbstractScrollArea::mousePressEvent(event);
     setFocus();
 
-    m_bLMouseButtonDown   = true;
     m_LeftClickDownPoint = event->pos(); //注意了
     m_LeftClickDownCell  = cellFromPt(m_LeftClickDownPoint);
     if (!isValid(m_LeftClickDownCell))
@@ -5402,16 +5409,12 @@ void HGridCtrl::mouseMoveEvent(QMouseEvent *event)
 
 void HGridCtrl::mouseReleaseEvent(QMouseEvent *event)
 {
+    //防止鼠标右键，也可以把m_bLMouseButtonDown = false 放到最后一行
+    if(Qt::LeftButton != event->button())
+        return;
     QAbstractScrollArea::mouseReleaseEvent(event);
     QPoint point = event->pos();
     m_bLMouseButtonDown = false;
-
-    /*if (GetCapture()->GetSafeHwnd() == GetSafeHwnd())
-    {
-        ReleaseCapture();
-        KillTimer(m_nTimerID);
-        m_nTimerID = 0;
-    }*/
 
     QPoint pointClickedRel;
     pointClickedRel = pointClicked( m_idCurrentCell.row, m_idCurrentCell.col, point);
@@ -5478,8 +5481,6 @@ void HGridCtrl::mouseReleaseEvent(QMouseEvent *event)
     m_MouseMode = MOUSE_NOTHING;
     setCursor(Qt::ArrowCursor);
 
-    if (!isValid(m_LeftClickDownCell))
-        return;
 }
 
 // Returns the point inside the cell that was clicked (coords relative to cell top left)
