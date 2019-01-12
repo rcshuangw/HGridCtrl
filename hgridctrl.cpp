@@ -31,7 +31,7 @@ HGridCtrl::HGridCtrl(int nRows, int nCols, int nFixedRows, int nFixedCols,QWidge
 
     m_crWindowText        = QColor(QCOLOR_WINDOWTEXT);
     m_crWindowColour      = QColor(QCOLOR_WINDOW);
-    m_cr3DFace            = QColor(QCOLOR_3DFACE);
+    m_cr3DFace            = QColor(218,226,236);//QColor(QCOLOR_3DFACE);
     m_crShadow            = QColor(QCOLOR_3DSHADOW);
     m_crGridLineColour    = QColor(192,192,192);
 
@@ -172,33 +172,20 @@ HGridCtrl::~HGridCtrl()
 
 void HGridCtrl::initGridCtrl()
 {
-    QShortcut *shortcut = new QShortcut(QKeySequence::Cut,this);//快捷键F3绑定删除操作
-    QObject::connect(shortcut, SIGNAL(activated()), this, SLOT(cut()));
+    //快捷键
+#ifndef QT_NO_CLIPBOARD
+    QShortcut *shortCut = new QShortcut(QKeySequence::Cut,this);
+    QObject::connect(shortCut, SIGNAL(activated()), this, SLOT(cut()));
+    QShortcut *shortCopy = new QShortcut(QKeySequence::Copy,this);
+    QObject::connect(shortCopy, SIGNAL(activated()), this, SLOT(copy()));
+    QShortcut *shortPaste = new QShortcut(QKeySequence::Paste,this);
+    QObject::connect(shortPaste, SIGNAL(activated()), this, SLOT(paste()));
+#endif
+    QShortcut *shortSelectAll = new QShortcut(QKeySequence::SelectAll,this);
+    QObject::connect(shortSelectAll, SIGNAL(activated()), this, SLOT(onEditSelectAll()));
 
 }
 
-void HGridCtrl::cut()
-{
-    onEditCut();
-   /*
-        case Qt::Key_A:
-            onEditSelectAll();
-            break;*/
-
-}
-
-void HGridCtrl::paste()
-{
-    onEditPaste();
-}
-
-void HGridCtrl::copy()
-{
-    onEditCopy();
-}
-
-
-//ok
 void HGridCtrl::setupDefaultCells()
 {
     m_cellDefault.setGrid(this);            // Normal editable cell
@@ -223,23 +210,19 @@ void HGridCtrl::setupDefaultCells()
 void HGridCtrl::paintEvent(QPaintEvent* event)
 {
     Q_UNUSED(event);
-    QPainter painter(viewport());      // device context for painting
+    QPainter painter(viewport());
 
-    if (m_bDoubleBuffer)    // Use a memory DC to remove flicker
+    //Qt高版本里面绘制默认带双缓冲
+    if (m_bDoubleBuffer)
     {
         //CMemDC MemDC(&dc);
         //OnDraw(&MemDC);
     }
-    else                    // Draw raw - this helps in debugging vis problems.
+    else
         onDraw(&painter);
 }
 
-
-
-// Custom background erasure. This gets called from within the OnDraw function,
-// since we will (most likely) be using a memory DC to stop flicker. If we just
-// erase the background normally through OnEraseBkgnd, and didn't fill the memDC's
-// selected bitmap with colour, then all sorts of vis problems would occur
+//绘制表格、单元格背景
 void HGridCtrl::eraseBkgnd(QPainter* pDC)
 {
     if(NULL == pDC)
@@ -375,10 +358,7 @@ HCellID HGridCtrl::setFocusCell(int nRow, int nCol)
 // move about with keyboard
 void HGridCtrl::keyReleaseEvent(QKeyEvent *event)
 {
-/*
- * Qt对复合键采用这种方式不是太好，此处涉及到复合键全部移除来单独实现
- * 此处仅时间对单个按键的操作
-*/
+    //Qt对复合键采用这种方式不是太好，涉及到复合键全部移除来单独实现，此处仅实现对单个按键的操作
     if (!isValid(m_idCurrentCell))
     {
         QWidget::keyReleaseEvent(event);
@@ -556,8 +536,6 @@ void HGridCtrl::keyReleaseEvent(QKeyEvent *event)
     }
     else if (Qt::Key_Home == event->key())
     {
-        // Home and Ctrl-Home work more like Excel
-        //  and don't let user go to a hidden cell
         if (Qt::SHIFT == event->modifiers())
         {
             //调整滚动条的位置
@@ -633,10 +611,7 @@ void HGridCtrl::keyReleaseEvent(QKeyEvent *event)
 
     if (next != m_idCurrentCell)
     {
-        // While moving with the Cursorkeys the current ROW/CELL will get selected
-        // OR Selection will get expanded when SHIFT is pressed
-        // Cut n paste from OnLButtonDown - Franco Bez
-        // Added check for NULL mouse mode - Chris Maunder.
+
         if (m_MouseMode == MOUSE_NOTHING)
         {
             m_PrevSelectedCellMap.clear();
@@ -644,13 +619,7 @@ void HGridCtrl::keyReleaseEvent(QKeyEvent *event)
             if (!(Qt::SHIFT == event->modifiers()) || Qt::Key_Tab == event->key())
                 m_SelectionStartCell = next;
 
-			// Notify parent that selection is changing - Arthur Westerman/Scot Brennecke 
-            //huangw
-            //SendMessageToParent(next.row, next.col, GVN_SELCHANGING);
             onSelecting(next);
-            //SendMessageToParent(next.row, next.col, GVN_SELCHANGED);
-
-
             m_MouseMode = MOUSE_NOTHING;
         }
 
@@ -737,49 +706,6 @@ void HGridCtrl::keyPressEvent(QKeyEvent* event)
     QAbstractScrollArea::keyPressEvent(event);
 }
 
-/*
-// Added by KiteFly
-LRESULT HGridCtrl::OnImeChar(WPARAM wCharCode, LPARAM)
-{
-    // EFW - BUG FIX
-    if (!IsCTRLpressed() && m_MouseMode == MOUSE_NOTHING && wCharCode != VK_ESCAPE) 
-        OnEditCell(m_idCurrentCell.row, m_idCurrentCell.col, CPoint( -1, -1), wCharCode);
-    return 0;
-}
-
-// Callback from any CInPlaceEdits that ended. This just calls OnEndEditCell,
-// refreshes the edited cell and moves onto next cell if the return character
-// from the edit says we should.
-void HGridCtrl::OnEndInPlaceEdit(NMHDR* pNMHDR, LRESULT* pResult)
-{
-    GV_DISPINFO *pgvDispInfo = (GV_DISPINFO *)pNMHDR;
-    GV_ITEM     *pgvItem = &pgvDispInfo->item;
-
-    // In case OnEndInPlaceEdit called as window is being destroyed
-    if (!IsWindow(GetSafeHwnd()))
-        return;
-
-    OnEndEditCell(pgvItem->row, pgvItem->col, pgvItem->strText);
-    //invalidateCellRect(HCellID(pgvItem->row, pgvItem->col));
-
-    switch (pgvItem->lParam)
-    {
-    case VK_TAB:
-    case VK_DOWN:
-    case VK_UP:
-    case VK_RIGHT:
-    case VK_LEFT:
-    case VK_NEXT:
-    case VK_PRIOR:
-    case VK_HOME:
-    case VK_END:
-        OnKeyDown(pgvItem->lParam, 0, 0);
-        OnEditCell(m_idCurrentCell.row, m_idCurrentCell.col, CPoint( -1, -1), pgvItem->lParam);
-    }
-
-    *pResult = 0;
-}
-*/
 // Handle horz scrollbar notifications 水平滚动条
 void HGridCtrl::onHScroll(uint nSBCode, uint nPos, QScrollBar* pScrollBar)
 {
@@ -5480,7 +5406,6 @@ void HGridCtrl::mouseReleaseEvent(QMouseEvent *event)
 
     m_MouseMode = MOUSE_NOTHING;
     setCursor(Qt::ArrowCursor);
-
 }
 
 // Returns the point inside the cell that was clicked (coords relative to cell top left)
