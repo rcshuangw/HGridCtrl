@@ -3202,6 +3202,7 @@ void HGridCtrl::autoColumnHeader()
 {
     if(fixedColumnCount() < 1)
         return;
+    int nFormat = QDT_CENTER|QDT_SINGLELINE|QDT_NOPREFIX;
     int colTeam = columnCount() / 26 + 1;
     char buf[256];
     memset(buf,0,256);
@@ -3214,6 +3215,7 @@ void HGridCtrl::autoColumnHeader()
         for(int j = 0; j < 26;j++)
         {
             strHead = QString("%1%2").arg(strText).arg(ascii[j]);
+            setItemFormat(0,i*26+j+1,nFormat);
             setItemText(0,i*26+j+1,strHead);//(0,0)是不需要头文字
         }
     }
@@ -3223,10 +3225,12 @@ void HGridCtrl::autoRowHeader()
 {
     if(fixedRowCount() < 1 )
         return;
+    int nFormat = QDT_CENTER|QDT_SINGLELINE|QDT_NOPREFIX;
     //行头是从第1行开始 固定0列，0行0列是公共区域
     for(int i = 1; i < rowCount();i++)
     {
         QString strRowHeader = QString("%1").arg(i);
+        setItemFormat(i,0,nFormat);
         setItemText(i,0,strRowHeader);
     }
 }

@@ -20,7 +20,9 @@ SOURCES +=  hgridcellbase.cpp \
             hgridctrl.cpp \
             hinplaceedit.cpp \
             hgridctrlcommand.cpp \
-    hcellrange.cpp
+            hcellrange.cpp \
+            hgridctrlwidget.cpp \
+            hgridreportwidget.cpp
             #main.cpp
 
 HEADERS  +=    \
@@ -31,7 +33,9 @@ HEADERS  +=    \
             ../include/hinplaceedit.h  \
             ../include/hgridctrl.h \
             ../include/hgridglobal.h \
-            ../include/hgridctrlcommand.h
+            ../include/hgridctrlcommand.h \
+            ../include/hgridctrlwidget.h \
+            ../include/hgridreportwidget.h
 
 
 
