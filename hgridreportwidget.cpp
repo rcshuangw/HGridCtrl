@@ -15,7 +15,7 @@ HGridReportWidget::HGridReportWidget(QWidget *parent)
     m_bPrintColour = true;
     m_tabWidget = new QTabWidget(this);
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(6, 6, 6, 6);
+    mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->addWidget(m_tabWidget);
     m_tabWidget->setTabPosition(QTabWidget::South);
     m_nNumSheets = 0;
@@ -34,6 +34,19 @@ void HGridReportWidget::setMaxRow(int row)
 void HGridReportWidget::setMaxCol(int col)
 {
     m_nCol = col;
+}
+
+void HGridReportWidget::setText(int row,int col,const QString& s)
+{
+    int nTabNum = m_tabWidget->count();
+    for(int i = 0; i < nTabNum; i++)
+    {
+        HGridCtrlWidget* w = (HGridCtrlWidget*)m_tabWidget->widget(i);
+        if(w)
+        {
+            return w->setText(row,col,s);
+        }
+    }
 }
 
 bool HGridReportWidget::load(const QString& strFile)
@@ -516,7 +529,7 @@ int  HGridReportWidget::rowHeight()
     {
         return w->rowHeight();
     }
-    return false;
+    return 0;
 }
 
 int  HGridReportWidget::columnWidth()
@@ -527,7 +540,17 @@ int  HGridReportWidget::columnWidth()
     {
         return w->columnWidth();
     }
-    return false;
+    return 0;
+}
+
+void HGridReportWidget::selectedRect(QRect& rect)
+{
+    int index = m_tabWidget->currentIndex();
+    HGridCtrlWidget* w = (HGridCtrlWidget*)m_tabWidget->widget(index);
+    if(w)
+    {
+        w->selectedRect(rect);
+    }
 }
 
 //操作

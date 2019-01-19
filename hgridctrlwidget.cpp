@@ -152,6 +152,26 @@ void HGridCtrlWidget::setMaxRowCol(int rowMax,int colMax)
     m_pGridCtrl->setFixedRowCount(1);
 }
 
+void HGridCtrlWidget::selectedRect(QRect &cellRect)
+{
+    HCellRange cellRange = m_pGridCtrl->selectedCellRange();
+    if(!cellRange.isValid())
+    {
+        cellRect = QRect();
+        return;
+    }
+    m_pGridCtrl->cellRangeRect(cellRange,cellRect);
+}
+
+
+//对单元格
+void HGridCtrlWidget::setText(int row,int col,const QString& s)
+{
+    if(row > m_pGridCtrl->rowCount() || col > m_pGridCtrl->columnCount())
+        return;
+    m_pGridCtrl->setItemText(row,col,s);
+}
+
 void HGridCtrlWidget::rowColRefresh()
 {
     if(m_bHorizontalHeader)

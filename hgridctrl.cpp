@@ -3212,11 +3212,12 @@ void HGridCtrl::autoColumnHeader()
             buf[t] = 'A';
         QString strText = QString(buf);
         QString strHead = strText;
-        for(int j = 0; j < 26;j++)
+        int col = (columnCount() - (i+1)*26)>0?26:columnCount() - i*26;
+        for(int j = 1; j < col;j++)
         {
-            strHead = QString("%1%2").arg(strText).arg(ascii[j]);
-            setItemFormat(0,i*26+j+1,nFormat);
-            setItemText(0,i*26+j+1,strHead);//(0,0)是不需要头文字
+            strHead = QString("%1%2").arg(strText).arg(ascii[j-1]);
+            setItemFormat(0,i*26+j,nFormat);
+            setItemText(0,i*26+j,strHead);//(0,0)是不需要头文字
         }
     }
 }
