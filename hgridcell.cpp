@@ -117,9 +117,9 @@ void HGridCell::reset()
     m_pEditWnd = NULL;
 
     m_nFormat = QDT_LEFT|QDT_VCENTER|QDT_SINGLELINE|QDT_NOPREFIX;  // Use default from CGridDefaultCell
-    m_crBkClr = QColor(Qt::white);     // Background colour (or CLR_DEFAULT)
-    m_crFgClr = QColor(Qt::black);     // Forground colour (or CLR_DEFAULT)
-    m_nMargin = (uint)-1;              // Use default from CGridDefaultCell
+    m_crBkClr = QColor(Qt::white);
+    m_crFgClr = QColor(Qt::black);
+    m_nMargin = (uint)-1;
     m_plfFont = QFont(QStringLiteral("宋体"),11, QFont::Normal);
     m_lParam  = quint32(0);
     m_Size    = QSize(85,20);            // Default Size
@@ -143,6 +143,16 @@ void HGridCell::reset()
 }
 
 /////////////////////////////////////////////////////////////////////////////
+void HGridCell::setFont(const QFont &font)
+{
+    m_plfFont = font;
+
+    QFontMetrics fontMetrics(m_plfFont);
+    setMargin(fontMetrics.size(Qt::TextSingleLine,tr(" ")).width());
+    m_Size = fontMetrics.size(Qt::TextSingleLine,tr(" XXXXXXXXXXXX "));
+    m_Size.setHeight(m_Size.height() * 3/2);
+}
+
 quint32 HGridCell::format()  const
 {
     if (m_nFormat == (quint32)-1)
@@ -153,6 +163,18 @@ quint32 HGridCell::format()  const
         return pDefaultCell->format();
    }
     return m_nFormat;
+}
+
+uint HGridCell::margin()  const
+{
+    if (m_nMargin == (uint)-1)
+    {
+        HGridDefaultCell *pDefaultCell = (HGridDefaultCell*) defaultCell();
+        if (!pDefaultCell)
+            return 0;
+        return pDefaultCell->margin();
+   }
+    return m_nMargin;
 }
 
 bool HGridCell::edit(int nRow, int nCol, const QRect& rect, const QPoint& point)
@@ -199,6 +221,12 @@ HGridDefaultCell::HGridDefaultCell()
     m_Size    = QSize(85,20);
     m_dwStyle = 0;
     m_Font = QFont("宋体",11,QFont::Normal);
+
+    QFontMetrics fontMetrics(m_Font);
+    setMargin(fontMetrics.size(Qt::TextSingleLine,tr(" ")).width());
+
+    m_Size = fontMetrics.size(Qt::TextSingleLine,tr(" XXXXXXXXXXXX "));
+    m_Size.setHeight(m_Size.height() * 3/2);
 }
 
 HGridDefaultCell::~HGridDefaultCell()

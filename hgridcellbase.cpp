@@ -374,11 +374,6 @@ bool HGridCellBase::printCell(QPainter* pDC, int nRow, int nCol, QRect rect)
         return false;
 
     pDC->save();
-    //rect.adjust(-1,-1,1,1);
-
-    pDC->drawRect(rect);
-    //rect.adjust(1,1,-1,-1);
-
     crBG = QColor(QCLR_DEFAULT);
     crFG = QColor(0, 0, 0);
     //带颜色打印
@@ -395,9 +390,9 @@ bool HGridCellBase::printCell(QPainter* pDC, int nRow, int nCol, QRect rect)
 
     //设置文字颜色
     QPen pen(crFG);
-    pen.setWidth(1);
+    pen.setWidth(0);
     pDC->setPen(pen);
-
+    pDC->drawRect(rect);
     //设置字体
     pDC->setFont(font());
 

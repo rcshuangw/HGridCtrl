@@ -666,6 +666,22 @@ void HGridCtrlWidget::autoSizeColumns()
     m_pGridCtrl->autoSizeColumns();
 }
 
+void HGridCtrlWidget::setPrintMarginInfo(int nHeaderHeight, int nFooterHeight,
+    int nLeftMargin, int nRightMargin, int nTopMargin,
+    int nBottomMargin)
+{
+    if(!m_pGridCtrl)
+        return;
+    m_pGridCtrl->setPrintMarginInfo(nHeaderHeight,nFooterHeight,nLeftMargin,nRightMargin,nTopMargin,nBottomMargin,0);
+}
+
+void HGridCtrlWidget::setPrintHeadFoot(QString strHead,QString strFoot)
+{
+    if(!m_pGridCtrl)
+        return;
+    m_pGridCtrl->setPrintHeadFoot(strHead,strFoot);
+}
+
 void HGridCtrlWidget::lineedit_textEdited(const QString &text)
 {
     HCellID cellID = m_pGridCtrl->focusCell();

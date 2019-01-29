@@ -1049,7 +1049,7 @@ void HGridCtrl::onDraw(QPainter* painter)
                         QRect mergerect=rect;
                         if(cellRangeRect(pMergedCell->mergeRange(),mergerect))
 						{
-                            mergerect.adjust(0,0,1,0);
+                            mergerect.adjust(0,0,1,1);
                             pMergedCell->setCoords(pCell->mergeCellID().row,pCell->mergeCellID().col);
                             pMergedCell->draw(painter, pCell->mergeCellID().row,pCell->mergeCellID().col, mergerect, true);
 						}
@@ -1060,7 +1060,7 @@ void HGridCtrl::onDraw(QPainter* painter)
                     QRect mergerect=rect;
                     if(cellRangeRect(pCell->mergeRange(),mergerect))
 					{
-                        mergerect.adjust(0,0,1,0);
+                        mergerect.adjust(0,0,1,1);
                         pCell->setCoords(row,col);
                         pCell->draw(painter, row, col, mergerect, true);
 					}
@@ -5563,6 +5563,12 @@ void HGridCtrl::printMarginInfo(int &nHeaderHeight, int &nFooterHeight,
     nTopMargin = m_nTopMargin;
     nBottomMargin = m_nBottomMargin;
     nGap = m_nGap;
+}
+
+void HGridCtrl::setPrintHeadFoot(QString strHead, QString strFoot)
+{
+    m_strHead = strHead;
+    m_strFoot = strFoot;
 }
 
 /////////////////////////////////////////////////////////////////////////////

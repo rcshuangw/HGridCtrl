@@ -38,7 +38,7 @@ void HReportPrint::onPrintBegin(QPainter *pDC, HPrintInfo *pInfo)
     // Create the printer font
     pDC->save();
     int nFontSize = 10;
-    QString strFontName = "Arial";
+    QString strFontName = "宋体";
     m_PrinterFont = QFont(strFontName,nFontSize);
 
     pDC->setFont(m_PrinterFont);
@@ -138,24 +138,6 @@ void HReportPrint::onPrint(QPainter *pDC, HPrintInfo *pInfo)
     bool bFirstPrintedRow = true;
     QRect rect;
     rect.setBottom(-1);
-
-    //Used for merge cells
-    //by Huang Wei
-    /*int Row=m_nCurrPrintRow;
-    QRect range;
-    range.bottom = -1;
-    while (Row < GetRowCount())
-    {
-        range.top = range.bottom+1;
-        range.bottom = range.top + GetRowHeight(Row) - 1;
-
-        if (range.bottom > m_nPageHeight)
-        {
-            range.bottom=range.top;
-            break;
-        }
-        Row++;
-    }*/
     while (m_nCurrPrintRow < pGridCtrl->rowCount())
     {
         rect.setTop(rect.bottom()+1);
@@ -190,46 +172,14 @@ void HReportPrint::onPrint(QPainter *pDC, HPrintInfo *pInfo)
                     QRect mergerect=rect;
                     if(pGridCtrl->cellRangeRect(pCell->mergeRange(),mergerect))
                     {
-                        //把mergerect的top,left移动到rect位置
-                        //QPoint pt = rect.topLeft() - mergerect.topLeft();
-                        //mergerect.moveTo(rect.topLeft());
-                        //mergerect.moveBottomRight(mergerect.bottomRight() + pt);
                         pCell->printCell(pDC, row, col, mergerect);
                     }
                 }
             }
-
-            //if (pCell)
-            //    pCell->printCell(pDC, m_nCurrPrintRow, col, rect);
-
-            //增加列和行是否允许绘制
-            /*if (pGridCtrl->gridLines() == GVL_BOTH || pGridCtrl->gridLines() == GVL_HORZ)
-            {
-                int Overlap = (col == 0 || m_nCurrPrintRow == pGridCtrl->fixedRowCount())? 0:0;
-                pDC->drawLine(QPoint(rect.left()-Overlap, rect.bottom()),QPoint(rect.right(), rect.bottom()));
-                if (m_nCurrPrintRow == 0 || m_nCurrPrintRow == pGridCtrl->fixedRowCount()){
-                    pDC->drawLine(QPoint(rect.left()-Overlap, rect.top()),QPoint(rect.right(), rect.top()));
-                }
-            }
-
-            if (pGridCtrl->gridLines() == GVL_BOTH || pGridCtrl->gridLines() == GVL_VERT)
-            {
-                int Overlap = (bFirstPrintedRow )? 0:0;
-                pDC->drawLine(QPoint(rect.right(), rect.top()-Overlap),QPoint(rect.right(), rect.bottom()));
-                if (col == 0 || col == pGridCtrl->fixedColumnCount()) {
-                    pDC->drawLine(QPoint(rect.left(), rect.top()-Overlap),QPoint(rect.left(), rect.bottom()));
-                }
-            }*/
         }
         m_nCurrPrintRow++;
         bFirstPrintedRow = false;
     }
-
-    //Used for merge cells
-    //by Huang Wei
-   /* CRect white_rect(CPoint(0,0),m_LogicalPageSize);
-    white_rect.top=range.bottom+1;
-    pDC->FillSolidRect(white_rect,RGB(255,255,255));*/
 
     // Footer
     pDC->translate(-transPointX,-transPointY);
@@ -294,9 +244,6 @@ void HReportPrint::PrintColumnHeadings(QPainter *pDC, HPrintInfo* pInfo)
         rect.setBottom(rect.top() + pInfo->m_pGridCtrl->rowHeight(row) - 1);
 
         rect.setRight(-1);
-        // if printColumn > fixedcolumncount we are on page 2 or more
-        // lets printout those fixed cell headings again the 1 or more that would be missed
-        // added by M.Fletcher 12/17/00
         for (int col = m_nPrintColumn; col < pInfo->m_pGridCtrl->columnCount(); col++)
         {
            rect.setLeft(rect.right() + 1);
@@ -308,29 +255,6 @@ void HReportPrint::PrintColumnHeadings(QPainter *pDC, HPrintInfo* pInfo)
            HGridCellBase* pCell = pInfo->m_pGridCtrl->getCell(row, col);
            if(pCell)
                pCell->printCell(pDC, row, col, rect);
-           /*if (pCell)
-           {
-                 //Used for merge cells
-                 //by Huang Wei
-                 int row=m_nCurrPrintRow;
-                 if(!pCell->IsMerged())
-                 {
-                     if(!pCell->IsMergeWithOthers())
-                     {
-                         pCell->PrintCell(pDC, row, col, rect);
-                     }
-                 }
-                 else
-                 {
-                     CRect mergerect=rect;
-                     if(GetCellRangeRect(pCell->m_MergeRange,&mergerect))
-                     {
-                         //mergerect.DeflateRect(0,0,1,1);
-                         mergerect.OffsetRect(rect.TopLeft()-mergerect.TopLeft());
-                         pCell->PrintCell(pDC, row, col, mergerect);
-                     }
-                 }
-           }*/
         }
 
     }
@@ -358,9 +282,10 @@ void HReportPrint::printHeader(QPainter *pDC, HPrintInfo *pInfo)
 
     // draw ruled-line across top
     pDC->save();
-    pDC->setPen(Qt::black);
+    QPen pen(Qt::black);
+    pen.setWidth(1);
+    pDC->setPen(pen);
     pDC->drawLine(QPoint(rc.left(), rc.bottom()),QPoint(rc.right(), rc.bottom()));
-
     pDC->restore();
 }
 
@@ -378,11 +303,10 @@ void HReportPrint::printFooter(QPainter *pDC, HPrintInfo *pInfo)
     strRight = dt.toString("yyyy-MM-dd hh:mm:ss");
 
     QRect rc(pInfo->m_rectDraw);
-
-    // draw ruled line on bottom
     //先画条线 如果不需要可以删除
-    pDC->setPen(Qt::black);
-    //pDC->drawRect(rc);
+    QPen pen(Qt::black);
+    pen.setWidth(1);
+    pDC->setPen(pen);
     pDC->drawLine(QPoint(rc.left(), rc.top()),QPoint(rc.right(), rc.top()));
 
     if( !strLeft.isEmpty() )

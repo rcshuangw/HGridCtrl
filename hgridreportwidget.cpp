@@ -744,6 +744,28 @@ void HGridReportWidget::print()
     print.print();
 }
 
+void HGridReportWidget::setPrintMarginInfo(int nHeaderHeight, int nFooterHeight,
+    int nLeftMargin, int nRightMargin, int nTopMargin,
+    int nBottomMargin)
+{
+    int index = m_tabWidget->currentIndex();
+    HGridCtrlWidget* w = (HGridCtrlWidget*)m_tabWidget->widget(index);
+    if(w)
+    {
+        w->setPrintMarginInfo(nHeaderHeight,nFooterHeight,nLeftMargin,nRightMargin,nTopMargin,nBottomMargin);
+    }
+}
+
+void HGridReportWidget::setPrintHeadFoot(QString strHead,QString strFoot)
+{
+    int index = m_tabWidget->currentIndex();
+    HGridCtrlWidget* w = (HGridCtrlWidget*)m_tabWidget->widget(index);
+    if(w)
+    {
+        w->setPrintHeadFoot(strHead,strFoot);
+    }
+}
+
 void HGridReportWidget::gridCell_clicked()
 {
     //获取格式信息
