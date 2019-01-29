@@ -2,7 +2,7 @@
 #include <QTabBar>
 #include <QVBoxLayout>
 #include "hgridctrlwidget.h"
-
+#include "hreportprint.h"
 HGridReportWidget::HGridReportWidget(QWidget *parent)
    :QWidget(parent)
 {
@@ -49,9 +49,13 @@ void HGridReportWidget::setText(int row,int col,const QString& s)
     }
 }
 
-bool HGridReportWidget::load(const QString& strFile)
+void HGridReportWidget::setReportFile(const QString &strFile)
 {
     m_strGridCtrlFile = strFile;
+}
+
+bool HGridReportWidget::load(const QString& strFile)
+{
     int nTabNum = m_tabWidget->count();
     for(int i = 0; i < nTabNum; i++)
     {
@@ -61,10 +65,12 @@ bool HGridReportWidget::load(const QString& strFile)
             return w->load(strFile);
         }
     }
+    return false;
 }
 
 bool HGridReportWidget::save(const QString& strFile)
 {
+    m_strGridCtrlFile = strFile;
     int nTabNum = m_tabWidget->count();
     for(int i = 0; i < nTabNum; i++)
     {
@@ -74,6 +80,7 @@ bool HGridReportWidget::save(const QString& strFile)
             return w->save(strFile);
         }
     }
+    return false;
 }
 
 void HGridReportWidget::init()
@@ -83,13 +90,33 @@ void HGridReportWidget::init()
     {
         HGridCtrlWidget* w = new HGridCtrlWidget(this);
         connect(w,SIGNAL(gridcellclicked()),this,SLOT(gridCell_clicked()));
-        setGridCtrlAttr(w);
         w->setMaxRowCol(m_nRow,m_nCol);
+        setGridCtrlAttr(w);
         w->initReportWidget();
         QString str = QString(QStringLiteral("第%1页")).arg(i+1);
         m_tabWidget->insertTab(i,w,str);
     }
 
+    if(!m_bEnableShowTab)
+        m_tabWidget->tabBar()->hide();
+    else
+        m_tabWidget->tabBar()->show();
+}
+
+void HGridReportWidget::open()
+{
+    clear();
+    for(int i = 0; i < m_nNumSheets; i++)
+    {
+        HGridCtrlWidget* w = new HGridCtrlWidget(this);
+        connect(w,SIGNAL(gridcellclicked()),this,SLOT(gridCell_clicked()));     
+        w->setMaxRowCol(m_nRow,m_nCol);
+        w->load(m_strGridCtrlFile);
+        setGridCtrlAttr(w);
+        w->initReportWidget();
+        QString str = QString(QStringLiteral("第%1页")).arg(i+1);
+        m_tabWidget->insertTab(i,w,str);
+    }
     if(!m_bEnableShowTab)
         m_tabWidget->tabBar()->hide();
     else
@@ -114,15 +141,16 @@ void HGridReportWidget::update()
     }
     else
     {
-        int num = m_tabWidget->count();
+        //int num = m_tabWidget->count();
         for(int i = 0; i < nAddCount; i++)
         {
             HGridCtrlWidget* w = new HGridCtrlWidget(this);
             connect(w,SIGNAL(gridcellclicked()),this,SLOT(gridCell_clicked()));
-            setGridCtrlAttr(w);
+            w->setMaxRowCol(m_nRow,m_nCol);
             w->load(m_strGridCtrlFile);
+            setGridCtrlAttr(w);
             w->initReportWidget();
-            QString str = QString(QStringLiteral("第%1页")).arg(num+1);
+            QString str = QString(QStringLiteral("第%1页")).arg(i+1);
             m_tabWidget->insertTab(i,w,str);
         }
     }
@@ -521,7 +549,7 @@ bool HGridReportWidget::setColumnWidth(int width)
     return false;
 }
 
-int  HGridReportWidget::rowHeight()
+int HGridReportWidget::rowHeight()
 {
     int index = m_tabWidget->currentIndex();
     HGridCtrlWidget* w = (HGridCtrlWidget*)m_tabWidget->widget(index);
@@ -532,7 +560,7 @@ int  HGridReportWidget::rowHeight()
     return 0;
 }
 
-int  HGridReportWidget::columnWidth()
+int HGridReportWidget::columnWidth()
 {
     int index = m_tabWidget->currentIndex();
     HGridCtrlWidget* w = (HGridCtrlWidget*)m_tabWidget->widget(index);
@@ -543,6 +571,26 @@ int  HGridReportWidget::columnWidth()
     return 0;
 }
 
+void HGridReportWidget::selectedRowCol(int& row1,int& col1,int& row2,int& col2)
+{
+    int index = m_tabWidget->currentIndex();
+    HGridCtrlWidget* w = (HGridCtrlWidget*)m_tabWidget->widget(index);
+    if(w)
+    {
+        return w->selectedRowCol(row1,col1,row2,col2);
+    }
+}
+
+void HGridReportWidget::setSelectedRowCol(int row1,int col1,int row2,int col2)
+{
+    int index = m_tabWidget->currentIndex();
+    HGridCtrlWidget* w = (HGridCtrlWidget*)m_tabWidget->widget(index);
+    if(w)
+    {
+        return w->setSelectedRowCol(row1,col1,row2,col2);
+    }
+}
+
 void HGridReportWidget::selectedRect(QRect& rect)
 {
     int index = m_tabWidget->currentIndex();
@@ -550,6 +598,36 @@ void HGridReportWidget::selectedRect(QRect& rect)
     if(w)
     {
         w->selectedRect(rect);
+    }
+}
+
+void HGridReportWidget::setFocusCell(int row,int col)
+{
+    int index = m_tabWidget->currentIndex();
+    HGridCtrlWidget* w = (HGridCtrlWidget*)m_tabWidget->widget(index);
+    if(w)
+    {
+        w->setFocusCell(row,col);
+    }
+}
+
+void HGridReportWidget::setTextColor(int row,int col,const QColor& clr)
+{
+    int index = m_tabWidget->currentIndex();
+    HGridCtrlWidget* w = (HGridCtrlWidget*)m_tabWidget->widget(index);
+    if(w)
+    {
+        w->setTextColor(row,col,clr);
+    }
+}
+
+void HGridReportWidget::enableOnlyRead(int row,int col,bool bRead)
+{
+    int index = m_tabWidget->currentIndex();
+    HGridCtrlWidget* w = (HGridCtrlWidget*)m_tabWidget->widget(index);
+    if(w)
+    {
+        w->enableOnlyRead(row,col,bRead);
     }
 }
 
@@ -653,7 +731,7 @@ void HGridReportWidget::autoSizeColumns()
 }
 
 //打印部分
-/*
+
 void HGridReportWidget::printPreview()
 {
     HReportPrint print(this);
@@ -665,7 +743,7 @@ void HGridReportWidget::print()
     HReportPrint print(this);
     print.print();
 }
-*/
+
 void HGridReportWidget::gridCell_clicked()
 {
     //获取格式信息

@@ -122,7 +122,7 @@ void HGridCell::reset()
     m_nMargin = (uint)-1;              // Use default from CGridDefaultCell
     m_plfFont = QFont(QStringLiteral("宋体"),11, QFont::Normal);
     m_lParam  = quint32(0);
-    m_Size    = QSize(100,25);            // Default Size
+    m_Size    = QSize(85,20);            // Default Size
     //m_bBorderOutSide= false;
     m_bLeftBorder   = false;
     m_bTopBorder    = false;
@@ -196,7 +196,7 @@ HGridDefaultCell::HGridDefaultCell()
     m_nFormat = QDT_LEFT|QDT_VCENTER|QDT_SINGLELINE|QDT_NOPREFIX;
     m_crFgClr = QColor(Qt::black);
     m_crBkClr = QColor(Qt::white);
-    m_Size    = QSize(100,25);
+    m_Size    = QSize(85,20);
     m_dwStyle = 0;
     m_Font = QFont("宋体",11,QFont::Normal);
 }

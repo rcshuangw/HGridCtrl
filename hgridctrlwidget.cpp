@@ -53,6 +53,8 @@ bool HGridCtrlWidget::save(const QString& strFile)
     //保存表格文件
     if(strFile.isNull() || strFile.isEmpty())
         return false;
+    if(QFile::exists(strFile))
+        QFile::remove(strFile);
     QFile file(strFile);
     if(!file.open(QIODevice::WriteOnly))
         return false;
@@ -160,9 +162,72 @@ void HGridCtrlWidget::selectedRect(QRect &cellRect)
         cellRect = QRect();
         return;
     }
-    m_pGridCtrl->cellRangeRect(cellRange,cellRect);
+    for(int row = cellRange.minRow();row <= cellRange.maxRow();row++)
+    {
+        for(int col = cellRange.minCol();col <= cellRange.maxCol();col++)
+        {
+            HGridCellBase* pCell = m_pGridCtrl->getCell(row,col);
+            if(pCell->isMerged())
+            {
+                QRect mergeRect;
+                m_pGridCtrl->cellRangeRect(pCell->mergeRange(),mergeRect);
+                cellRect = cellRect.united(mergeRect);
+            }
+            else
+            {
+                QRect cRect;
+                m_pGridCtrl->cellRect(row,col,cRect);
+                cellRect = cellRect.united(cRect);
+            }
+        }
+    }
 }
 
+void HGridCtrlWidget::selectedRowCol(int& row1,int& col1,int& row2,int& col2)
+{
+    HCellRange range = m_pGridCtrl->selectedCellRange();
+    if(!range.isValid())
+        return;
+    row1 = range.minRow();
+    col1 = range.minCol();
+    row2 = range.maxRow();
+    col2 = range.maxCol();
+}
+
+void HGridCtrlWidget::setSelectedRowCol(int row1,int col1,int row2,int col2)
+{
+   if(row1 > m_pGridCtrl->rowCount())
+       return;
+   m_pGridCtrl->setSelectedRange(row1,col1,row2,col2,false,false);
+}
+
+void HGridCtrlWidget::setFocusCell(int row,int col)
+{
+    if(row > m_pGridCtrl->rowCount() || col > m_pGridCtrl->columnCount())
+        return;
+    m_pGridCtrl->setFocusCell(row,col);
+}
+
+void HGridCtrlWidget::setTextColor(int row,int col,const QColor& clr)
+{
+    if(row > m_pGridCtrl->rowCount() || col > m_pGridCtrl->columnCount())
+        return;
+    HGridCellBase* pCell = m_pGridCtrl->getCell(row,col);
+    if(!pCell) return;
+    pCell->setTextClr(clr);
+}
+
+void HGridCtrlWidget::enableOnlyRead(int row,int col,bool bRead)
+{
+    if(row > m_pGridCtrl->rowCount() || col > m_pGridCtrl->columnCount())
+        return;
+    int nState = m_pGridCtrl->itemState(row,col);
+    if(bRead)
+        nState = nState | GVIS_READONLY;
+    else
+        nState = nState &~GVIS_READONLY;
+    m_pGridCtrl->setItemState(row,col,nState);
+}
 
 //对单元格
 void HGridCtrlWidget::setText(int row,int col,const QString& s)
@@ -605,6 +670,9 @@ void HGridCtrlWidget::lineedit_textEdited(const QString &text)
 {
     HCellID cellID = m_pGridCtrl->focusCell();
     if(!cellID.isValid()) return;
+    int nState = m_pGridCtrl->itemState(cellID.row,cellID.col);
+    if(GVIS_READONLY == (nState & GVIS_READONLY))
+        return;
     HGridCellBase* pCell = m_pGridCtrl->getCell(cellID);
     if(!pCell) return;
     pCell->setText(text);

@@ -14,8 +14,9 @@ void HGridCellBase::load(int v,QDataStream* ds)
 {
     if(!ds) return;
     int n;
-    *ds>>n;
-    m_nState = n;
+    //state不需存，重新load之后，state默认就是无
+    //*ds>>n;
+    //m_nState = n;
     *ds>>n;
     m_MergeCellID.row = n;
     *ds>>n;
@@ -35,7 +36,7 @@ void HGridCellBase::save(int v,QDataStream* ds)
 {
     if(!ds) return;
     int n;
-    *ds<<(quint32)m_nState;
+    //*ds<<(quint32)m_nState;
     *ds<<(int)m_MergeCellID.row;
     *ds<<(int)m_MergeCellID.col;
     *ds<<(bool)m_bMergeWithOthers;
@@ -357,7 +358,7 @@ bool HGridCellBase::validateEdit(QString& str)
 }
 
 //表格绘制都用行列方式
-bool HGridCellBase::printCell(QPainter* pDC, int nRow, int nCol, QRect& rect)
+bool HGridCellBase::printCell(QPainter* pDC, int nRow, int nCol, QRect rect)
 {
     if(	!isShow() && !isMerged())
     {
@@ -373,9 +374,10 @@ bool HGridCellBase::printCell(QPainter* pDC, int nRow, int nCol, QRect& rect)
         return false;
 
     pDC->save();
-    rect.adjust(-1,-1,1,1);
+    //rect.adjust(-1,-1,1,1);
+
     pDC->drawRect(rect);
-    rect.adjust(1,1,-1,-1);
+    //rect.adjust(1,1,-1,-1);
 
     crBG = QColor(QCLR_DEFAULT);
     crFG = QColor(0, 0, 0);
@@ -392,7 +394,9 @@ bool HGridCellBase::printCell(QPainter* pDC, int nRow, int nCol, QRect& rect)
     }
 
     //设置文字颜色
-    pDC->setPen(crFG);
+    QPen pen(crFG);
+    pen.setWidth(1);
+    pDC->setPen(pen);
 
     //设置字体
     pDC->setFont(font());

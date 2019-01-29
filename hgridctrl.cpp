@@ -5503,7 +5503,7 @@ void HGridCtrl::mouseDoubleClickEvent(QMouseEvent *event)
         }
 
         if (cell.row >= m_nFixedRows && isValid(m_LeftClickDownCell) &&
-            cell.col >= m_nFixedCols && bInTextArea)
+            cell.col >= m_nFixedCols && bInTextArea &&isCellEditable(m_LeftClickDownCell))
         {
             onEditCell(cell.row, cell.col, pointClickedRel);
         }
@@ -5633,14 +5633,14 @@ void HGridCtrl::load(int v,QDataStream* ds)
     *ds>>un;
     m_nAutoSizeColumnStyle = un;
 
-    *ds>>n;
+    /**ds>>n;
     m_nRows = n;
     *ds>>n;
     m_nFixedRows = n;
     *ds>>n;
     m_nCols = n;
     *ds>>n;
-    m_nFixedCols = n;
+    m_nFixedCols = n;*/
     *ds>>n;
     m_nVScrollMax = n;
     *ds>>n;
@@ -5667,8 +5667,6 @@ void HGridCtrl::load(int v,QDataStream* ds)
     *ds>>m_arColWidths;
 
     //读完之后需要创建行列表格，设置行列表格的行高列宽之后，才能继续读取单元格的内容，否则没有创建单元格是错误的
-    setRowCount(m_nRows);
-    setColumnCount(m_nCols);
     for(int row = 0; row < rowCount();row++)
         setRowHeight(row,m_arRowHeights[row]);
     for(int col = 0; col < columnCount();col++)
@@ -5691,36 +5689,36 @@ void HGridCtrl::save(int v,QDataStream* ds)
 {
     if(!ds) return;
     *ds<<(int)m_nGridLines;
-    *ds<<(int)m_bShowGrid;
-    *ds<<(int)m_bEditable;
-    *ds<<(int)m_bModified;
-    *ds<<(int)m_bAllowDragAndDrop;
-    *ds<<(int)m_bListMode;
-    *ds<<(int)m_bSingleRowSelection;
-    *ds<<(int)m_bSingleColSelection;
-    *ds<<(int)m_bAllowDraw ;
-    *ds<<(int)m_bEnableSelection ;
-    *ds<<(int)m_bFixedRowSelection;
-    *ds<<(int)m_bFixedColumnSelection;
-    *ds<<(int)m_bSortOnClick;
-    *ds<<(int)m_bHandleTabKey;
-    *ds<<(int)m_bTitleTips;
+    *ds<<(bool)m_bShowGrid;
+    *ds<<(bool)m_bEditable;
+    *ds<<(bool)m_bModified;
+    *ds<<(bool)m_bAllowDragAndDrop;
+    *ds<<(bool)m_bListMode;
+    *ds<<(bool)m_bSingleRowSelection;
+    *ds<<(bool)m_bSingleColSelection;
+    *ds<<(bool)m_bAllowDraw ;
+    *ds<<(bool)m_bEnableSelection ;
+    *ds<<(bool)m_bFixedRowSelection;
+    *ds<<(bool)m_bFixedColumnSelection;
+    *ds<<(bool)m_bSortOnClick;
+    *ds<<(bool)m_bHandleTabKey;
+    *ds<<(bool)m_bTitleTips;
     *ds<<(int)m_nBarState;
-    *ds<<(int)m_bWysiwygPrinting;
-    *ds<<(int)m_bHiddenRowUnhide;
-    *ds<<(int)m_bHiddenColUnhide;
-    *ds<<(int)m_bAllowRowHide;
-    *ds<<(int)m_bAllowColHide;
-    *ds<<(int)m_bAutoSizeSkipColHdr;
-    *ds<<(int)m_bTrackFocusCell;
-    *ds<<(int)m_bFrameFocus;
+    *ds<<(bool)m_bWysiwygPrinting;
+    *ds<<(bool)m_bHiddenRowUnhide;
+    *ds<<(bool)m_bHiddenColUnhide;
+    *ds<<(bool)m_bAllowRowHide;
+    *ds<<(bool)m_bAllowColHide;
+    *ds<<(bool)m_bAutoSizeSkipColHdr;
+    *ds<<(bool)m_bTrackFocusCell;
+    *ds<<(bool)m_bFrameFocus;
 
     *ds<<(uint)m_nAutoSizeColumnStyle;
 
-    *ds<<(int)m_nRows;
+    /**ds<<(int)m_nRows;
     *ds<<(int)m_nFixedRows;
     *ds<<(int)m_nCols;
-    *ds<<(int)m_nFixedCols;
+    *ds<<(int)m_nFixedCols;*/
     *ds<<(int)m_nVScrollMax;
     *ds<<(int)m_nHScrollMax;
     *ds<<(int)m_nHeaderHeight;
@@ -5731,6 +5729,8 @@ void HGridCtrl::save(int v,QDataStream* ds)
     *ds<<(int)m_nBottomMargin;
     *ds<<(int)m_nGap;
 
+    *ds<<m_arRowHeights;
+    *ds<<m_arColWidths;
     for(int row = 0; row < rowCount();row++)
     {
         for(int col = 0; col < columnCount();col++)

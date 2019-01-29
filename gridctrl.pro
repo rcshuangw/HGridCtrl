@@ -7,7 +7,7 @@
 QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
-
+QT += printsupport
 TARGET = gridctrl
 TEMPLATE = lib
 DEFINES += GRIDCTRL_DLL
@@ -22,6 +22,7 @@ SOURCES +=  hgridcellbase.cpp \
             hgridctrlcommand.cpp \
             hcellrange.cpp \
             hgridctrlwidget.cpp \
+            hreportprint.cpp \
             hgridreportwidget.cpp
             #main.cpp
 
@@ -35,6 +36,7 @@ HEADERS  +=    \
             ../include/hgridglobal.h \
             ../include/hgridctrlcommand.h \
             ../include/hgridctrlwidget.h \
+            ../include/hreportprint.h \
             ../include/hgridreportwidget.h
 
 
