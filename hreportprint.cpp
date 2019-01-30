@@ -151,7 +151,7 @@ void HReportPrint::onPrint(QPainter *pDC, HPrintInfo *pInfo)
         for (int col = m_nPrintColumn; col < pGridCtrl->columnCount(); col++)
         {
             rect.setLeft(rect.right() + 1);
-            rect.setRight(rect.left() + pGridCtrl->columnWidth(col) - 1);
+            rect.setRight(rect.left() + pGridCtrl->columnWidth(col) -1);
 
             if( rect.right() > m_nPageWidth)
                 break;
@@ -172,6 +172,7 @@ void HReportPrint::onPrint(QPainter *pDC, HPrintInfo *pInfo)
                     QRect mergerect=rect;
                     if(pGridCtrl->cellRangeRect(pCell->mergeRange(),mergerect))
                     {
+                        mergerect.adjust(0,0,-1,-1);
                         pCell->printCell(pDC, row, col, mergerect);
                     }
                 }
@@ -269,17 +270,9 @@ void HReportPrint::onPrintEnd(QPainter *p, HPrintInfo *pInfo)
 
 void HReportPrint::printHeader(QPainter *pDC, HPrintInfo *pInfo)
 {
-    QString strRight;
-    strRight = "my test";
-    // print parent window title in the centre (Gert Rijs)
-    QString strCenter = "hello,world";
     QRect   rc(pInfo->m_rectDraw);
-    //QRect rc(0,0,100,100);
-    if( !strCenter.isEmpty() )
-        pDC->drawText( rc, QDT_LEFT | QDT_SINGLELINE | QDT_NOPREFIX | QDT_VCENTER, strCenter);
-    if( !strRight.isEmpty() )
-        pDC->drawText( rc, QDT_RIGHT | QDT_SINGLELINE | QDT_NOPREFIX | QDT_VCENTER, strRight);
-
+    if( !m_strHeaderText.isEmpty() )
+        pDC->drawText( rc, QDT_SINGLELINE | QDT_NOPREFIX | QDT_CENTER, m_strHeaderText);
     // draw ruled-line across top
     pDC->save();
     QPen pen(Qt::black);
@@ -293,15 +286,6 @@ void HReportPrint::printFooter(QPainter *pDC, HPrintInfo *pInfo)
 {
     if(!pDC || !pInfo)
         return;
-    //获取页尾文字
-    QString strLeft;
-    strLeft = QString(("Page %1 ")).arg(pInfo->m_nCurPage);
-
-    // date and time on the right
-    QString strRight;
-    QDateTime dt = QDateTime::currentDateTime();
-    strRight = dt.toString("yyyy-MM-dd hh:mm:ss");
-
     QRect rc(pInfo->m_rectDraw);
     //先画条线 如果不需要可以删除
     QPen pen(Qt::black);
@@ -309,11 +293,8 @@ void HReportPrint::printFooter(QPainter *pDC, HPrintInfo *pInfo)
     pDC->setPen(pen);
     pDC->drawLine(QPoint(rc.left(), rc.top()),QPoint(rc.right(), rc.top()));
 
-    if( !strLeft.isEmpty() )
-       pDC->drawText(rc,QDT_LEFT | QDT_SINGLELINE | QDT_NOPREFIX | QDT_VCENTER,strLeft);
-    if( !strRight.isEmpty() )
-       pDC->drawText( rc, QDT_RIGHT | QDT_SINGLELINE | QDT_NOPREFIX | QDT_VCENTER,strRight);
-
+    if( !m_strFooterText.isEmpty() )
+       pDC->drawText(rc,QDT_SINGLELINE | QDT_NOPREFIX | QDT_CENTER,m_strFooterText);
     pDC->restore();
 }
 
@@ -352,6 +333,7 @@ void HReportPrint::print()
               if(!pGridCtrl) continue;
               m_PrintInfo.m_pGridCtrl = pGridCtrl;
               m_PrintInfo.m_nCurPage = j;
+              initPrintParams();
               printPage(&painter);
             }
         }
@@ -378,9 +360,20 @@ void HReportPrint::printPreview(QPrinter* p)
       if(!pGridCtrl) continue;
       m_PrintInfo.m_pGridCtrl = pGridCtrl;
       m_PrintInfo.m_nCurPage = j;
+      initPrintParams();
       printPage(&painter);
     }
 
+}
+
+void HReportPrint::initPrintParams()
+{
+    if(!m_PrintInfo.m_pGridCtrl)
+        return;
+    int nGap;
+    m_PrintInfo.m_pGridCtrl->printMarginInfo(m_nHeaderHeight, m_nFooterHeight, m_nLeftMargin,m_nRightMargin, m_nTopMargin, m_nBottomMargin,nGap);
+    m_PrintInfo.m_pGridCtrl->printHeadFoot(m_strHeaderText,m_strFooterText);
+    m_PrintInfo.m_pGridCtrl->printOther(m_bHorizontalHeader,m_bVerticalHeader, m_bShowGrids,m_bPrintColour);
 }
 
 void HReportPrint::printPages(QPrinter* p)

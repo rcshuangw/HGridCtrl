@@ -766,6 +766,36 @@ void HGridReportWidget::setPrintHeadFoot(QString strHead,QString strFoot)
     }
 }
 
+void HGridReportWidget::printHeadFoot(QString& strHead,QString& strFoot)
+{
+    int index = m_tabWidget->currentIndex();
+    HGridCtrlWidget* w = (HGridCtrlWidget*)m_tabWidget->widget(index);
+    if(w)
+    {
+        w->printHeadFoot(strHead,strFoot);
+    }
+}
+
+void HGridReportWidget::setPrintOther(bool bHorizontalHeader,bool bVerticalHeader, bool bShowGrids,bool bPrintColour)
+{
+    int index = m_tabWidget->currentIndex();
+    HGridCtrlWidget* w = (HGridCtrlWidget*)m_tabWidget->widget(index);
+    if(w)
+    {
+        w->setPrintOther(bHorizontalHeader,bVerticalHeader,bShowGrids,bPrintColour);
+    }
+}
+
+void HGridReportWidget::printOther(bool& bHorizontalHeader,bool& bVerticalHeader, bool& bShowGrids,bool& bPrintColour)
+{
+    int index = m_tabWidget->currentIndex();
+    HGridCtrlWidget* w = (HGridCtrlWidget*)m_tabWidget->widget(index);
+    if(w)
+    {
+        w->printOther(bHorizontalHeader,bVerticalHeader,bShowGrids,bPrintColour);
+    }
+}
+
 void HGridReportWidget::gridCell_clicked()
 {
     //获取格式信息

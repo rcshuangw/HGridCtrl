@@ -319,6 +319,7 @@ void HGridCtrlWidget::setBorder(GV_BORDER_ITEM* item)
                     pCell->setBorderRightStyle(item->nRightBorderStyle);
                     pCell->setDrawBorderRight(item->bBorderOutSide);
                 }
+
             }
             else
             {
@@ -336,48 +337,105 @@ void HGridCtrlWidget::setBorder(GV_BORDER_ITEM* item)
                 pCell->setDrawBorderBottom(item->bBorderBottom);
             }
 
-            //最小行的上一个单元格
-            if(rangeRow == range.minRow())
+            if(pCell->isMerged())
             {
-                HGridCellBase* pRowOutCell = m_pGridCtrl->getCell(rangeRow-1,rangeCol);
-                if(pRowOutCell)
+                HCellRange mergeRange = pCell->mergeRange();
+                for(int row = mergeRange.minRow();row <= mergeRange.maxRow();row++)
                 {
-                    pRowOutCell->setDrawBorderBottom(pCell->isDrawBorderTop());
-                    pRowOutCell->setBorderBottomColor(pCell->borderTopColor());
-                    pRowOutCell->setBorderBottomStyle(pCell->borderTopStyle());
+                    for(int col = mergeRange.minCol();col <= mergeRange.maxCol();col++)
+                    {
+                        if(row == range.minRow())
+                        {
+                            HGridCellBase* pRowOutCell = m_pGridCtrl->getCell(row-1,col);
+                            if(pRowOutCell)
+                            {
+                                pRowOutCell->setDrawBorderBottom(pCell->isDrawBorderTop());
+                                pRowOutCell->setBorderBottomColor(pCell->borderTopColor());
+                                pRowOutCell->setBorderBottomStyle(pCell->borderTopStyle());
+                            }
+                        }
+
+                        if(row == mergeRange.maxRow())//最大行的下一个单元格
+                        {
+                            HGridCellBase* pRowOutCell = m_pGridCtrl->getCell(row+1,col);
+                            if(pRowOutCell)
+                            {
+                                pRowOutCell->setDrawBorderTop(pCell->isDrawBorderBottom());
+                                pRowOutCell->setBorderTopColor(pCell->borderBottomColor());
+                                pRowOutCell->setBorderTopStyle(pCell->borderBottomStyle());
+                            }
+                        }
+
+                        if(col == range.minCol())
+                        {
+                            HGridCellBase* pRowOutCell = m_pGridCtrl->getCell(row,col-1);
+                            if(pRowOutCell)
+                            {
+                                pRowOutCell->setDrawBorderRight(pCell->isDrawBorderLeft());
+                                pRowOutCell->setBorderRightColor(pCell->borderLeftColor());
+                                pRowOutCell->setBorderRightStyle(pCell->borderLeftStyle());
+                            }
+                        }
+
+                        if(col == mergeRange.maxCol())
+                        {
+                            HGridCellBase* pRowOutCell = m_pGridCtrl->getCell(row,col+1);
+                            if(pRowOutCell)
+                            {
+                                pRowOutCell->setDrawBorderLeft(pCell->isDrawBorderRight());
+                                pRowOutCell->setBorderLeftColor(pCell->borderRightColor());
+                                pRowOutCell->setBorderLeftStyle(pCell->borderRightStyle());
+                            }
+                        }
+                    }
                 }
             }
-
-            if(rangeRow == range.maxRow())//最大行的下一个单元格
+            else
             {
-                HGridCellBase* pRowOutCell = m_pGridCtrl->getCell(rangeRow+1,rangeCol);
-                if(pRowOutCell)
+                //最小行的上一个单元格
+                if(rangeRow == range.minRow())
                 {
-                    pRowOutCell->setDrawBorderTop(pCell->isDrawBorderBottom());
-                    pRowOutCell->setBorderTopColor(pCell->borderBottomColor());
-                    pRowOutCell->setBorderTopStyle(pCell->borderBottomStyle());
+                    HGridCellBase* pRowOutCell = m_pGridCtrl->getCell(rangeRow-1,rangeCol);
+                    if(pRowOutCell)
+                    {
+                        pRowOutCell->setDrawBorderBottom(pCell->isDrawBorderTop());
+                        pRowOutCell->setBorderBottomColor(pCell->borderTopColor());
+                        pRowOutCell->setBorderBottomStyle(pCell->borderTopStyle());
+                    }
                 }
-            }
 
-            if(rangeCol == range.minCol())
-            {
-                HGridCellBase* pRowOutCell = m_pGridCtrl->getCell(rangeRow,rangeCol-1);
-                if(pRowOutCell)
+
+                if(rangeRow == range.maxRow())//最大行的下一个单元格
                 {
-                    pRowOutCell->setDrawBorderRight(pCell->isDrawBorderLeft());
-                    pRowOutCell->setBorderRightColor(pCell->borderLeftColor());
-                    pRowOutCell->setBorderRightStyle(pCell->borderLeftStyle());
+                    HGridCellBase* pRowOutCell = m_pGridCtrl->getCell(rangeRow+1,rangeCol);
+                    if(pRowOutCell)
+                    {
+                        pRowOutCell->setDrawBorderTop(pCell->isDrawBorderBottom());
+                        pRowOutCell->setBorderTopColor(pCell->borderBottomColor());
+                        pRowOutCell->setBorderTopStyle(pCell->borderBottomStyle());
+                    }
                 }
-            }
 
-            if(rangeCol == range.maxCol())
-            {
-                HGridCellBase* pRowOutCell = m_pGridCtrl->getCell(rangeRow,rangeCol+1);
-                if(pRowOutCell)
+                if(rangeCol == range.minCol())
                 {
-                    pRowOutCell->setDrawBorderLeft(pCell->isDrawBorderRight());
-                    pRowOutCell->setBorderLeftColor(pCell->borderRightColor());
-                    pRowOutCell->setBorderLeftStyle(pCell->borderRightStyle());
+                    HGridCellBase* pRowOutCell = m_pGridCtrl->getCell(rangeRow,rangeCol-1);
+                    if(pRowOutCell)
+                    {
+                        pRowOutCell->setDrawBorderRight(pCell->isDrawBorderLeft());
+                        pRowOutCell->setBorderRightColor(pCell->borderLeftColor());
+                        pRowOutCell->setBorderRightStyle(pCell->borderLeftStyle());
+                    }
+                }
+
+                if(rangeCol == range.maxCol())
+                {
+                    HGridCellBase* pRowOutCell = m_pGridCtrl->getCell(rangeRow,rangeCol+1);
+                    if(pRowOutCell)
+                    {
+                        pRowOutCell->setDrawBorderLeft(pCell->isDrawBorderRight());
+                        pRowOutCell->setBorderLeftColor(pCell->borderRightColor());
+                        pRowOutCell->setBorderLeftStyle(pCell->borderRightStyle());
+                    }
                 }
             }
         }
@@ -680,6 +738,27 @@ void HGridCtrlWidget::setPrintHeadFoot(QString strHead,QString strFoot)
     if(!m_pGridCtrl)
         return;
     m_pGridCtrl->setPrintHeadFoot(strHead,strFoot);
+}
+
+void HGridCtrlWidget::printHeadFoot(QString& strHead,QString& strFoot)
+{
+    if(!m_pGridCtrl)
+        return;
+    m_pGridCtrl->printHeadFoot(strHead,strFoot);
+}
+
+void HGridCtrlWidget::setPrintOther(bool bHorizontalHeader,bool bVerticalHeader, bool bShowGrids,bool bPrintColour)
+{
+    if(!m_pGridCtrl)
+        return;
+    m_pGridCtrl->setPrintOther(bHorizontalHeader,bVerticalHeader,bShowGrids,bPrintColour);
+}
+
+void HGridCtrlWidget::printOther(bool& bHorizontalHeader,bool& bVerticalHeader, bool& bShowGrids,bool& bPrintColour)
+{
+    if(!m_pGridCtrl)
+        return;
+    m_pGridCtrl->printOther(bHorizontalHeader,bVerticalHeader,bShowGrids,bPrintColour);
 }
 
 void HGridCtrlWidget::lineedit_textEdited(const QString &text)

@@ -141,7 +141,7 @@ bool HGridCellBase::draw(QPainter* painter, int nRow, int nCol, QRect rect, bool
         // whole cell is enclosed.
         if(pGrid->gridLines() != GVL_NONE)
         {
-            rect.adjust(0,0,-2,-2);
+            rect.adjust(0,0,-1,-1);
         }
 
         if (bEraseBkgnd)
@@ -164,9 +164,9 @@ bool HGridCellBase::draw(QPainter* painter, int nRow, int nCol, QRect rect, bool
         // Adjust rect after frame draw if no grid lines
         if(pGrid->gridLines() == GVL_NONE)
         {
-            rect.adjust(0,0,2,2);;
+            rect.adjust(0,0,1,1);;
         }
-        rect = rect.marginsAdded(QMargins(0,1,1,1));
+        //rect = rect.marginsAdded(QMargins(0,1,1,1));
     }
     else if ((state() & GVIS_SELECTED))//设置多个单元格选中的颜色，和文字颜色
     {
@@ -178,10 +178,10 @@ bool HGridCellBase::draw(QPainter* painter, int nRow, int nCol, QRect rect, bool
     {
         if (bEraseBkgnd)
         {
-            rect.adjust(0,0,-2,-2);    // FillRect doesn't draw RHS or bottom
+            rect.adjust(0,0,-1,-1);    // FillRect doesn't draw RHS or bottom
             QBrush brush(TextBkClr);
             painter->fillRect(rect,brush);//也可以用brush
-            rect.adjust(0,0,2,2);
+            rect.adjust(0,0,1,1);
         }
         painter->setPen(QPen(TextClr));//设置画笔的颜色
     }
@@ -276,7 +276,7 @@ bool HGridCellBase::draw(QPainter* painter, int nRow, int nCol, QRect rect, bool
         painter->restore();
     }
 
-    rect.adjust(margin(),margin(),0,0);
+    rect.adjust(margin(),0,-margin(),0);
 
     textRect(rect);
     painter->setFont(font());
@@ -377,7 +377,7 @@ bool HGridCellBase::printCell(QPainter* pDC, int nRow, int nCol, QRect rect)
     crBG = QColor(QCLR_DEFAULT);
     crFG = QColor(0, 0, 0);
     //带颜色打印
-    if (pGrid->GetShadedPrintOut())
+    if (pGrid->isPrintColour())
     {
         crBG = backClr();
         crFG = textClr();
@@ -389,48 +389,54 @@ bool HGridCellBase::printCell(QPainter* pDC, int nRow, int nCol, QRect rect)
     }
 
     //设置文字颜色
-    QPen pen(crFG);
+    QPen pen(Qt::black);
     pen.setWidth(0);
     pDC->setPen(pen);
-    pDC->drawRect(rect);
+    //如果打印表格-----
+    if(pGrid->isPrintShowGrids())
+        pDC->drawRect(rect);
     //设置字体
     pDC->setFont(font());
 
-    QRect rectBoard = rect;
+    QRect rectBoard = rect;//rect.adjusted(2,2,1,1);
     //绘制表格
     if(!isFixed() && pGrid->gridLines() != GVL_NONE)
     {
         pDC->save();
         if(isDrawBorderLeft())
         {
-            QPen leftPen(pGrid->GetShadedPrintOut()?borderLeftColor():crBG);
+            QPen leftPen(pGrid->isPrintColour()?borderLeftColor():crBG);
+            leftPen.setWidth(0);
             leftPen.setStyle(Qt::PenStyle(borderLeftStyle()));
             pDC->setPen(leftPen);
-            pDC->drawLine(QPoint(rectBoard.left(),rectBoard.top()),QPoint(rectBoard.left(),rectBoard.bottom()));
+            pDC->drawLine(QPoint(rectBoard.left(),rectBoard.top()),QPoint(rectBoard.left(),rectBoard.bottom()+1));
         }
 
         if(isDrawBorderRight())
         {
-            QPen rightPen(pGrid->GetShadedPrintOut()?borderRightColor():crBG);
+            QPen rightPen(pGrid->isPrintColour()?borderRightColor():crBG);
+            rightPen.setWidth(0);
             rightPen.setStyle(Qt::PenStyle(borderRightStyle()));
             pDC->setPen(rightPen);
-            pDC->drawLine(QPoint(rectBoard.right(),rectBoard.top()),QPoint(rectBoard.right(),rectBoard.bottom()));
+            pDC->drawLine(QPoint(rectBoard.right()+1,rectBoard.top()),QPoint(rectBoard.right()+1,rectBoard.bottom()+1));
         }
 
         if(isDrawBorderTop())
         {
-            QPen topPen(pGrid->GetShadedPrintOut()?borderTopColor():crBG);
+            QPen topPen(pGrid->isPrintColour()?borderTopColor():crBG);
+            topPen.setWidth(0);
             topPen.setStyle(Qt::PenStyle(borderTopStyle()));
             pDC->setPen(topPen);
-            pDC->drawLine(QPoint(rectBoard.left(),rectBoard.top()),QPoint(rectBoard.right(),rectBoard.top()));
+            pDC->drawLine(QPoint(rectBoard.left(),rectBoard.top()),QPoint(rectBoard.right()+1,rectBoard.top()));
         }
 
         if(isDrawBorderBottom())
         {
-            QPen bottomPen(pGrid->GetShadedPrintOut()?borderBottomColor():crBG);
+            QPen bottomPen(pGrid->isPrintColour()?borderBottomColor():crBG);
+            bottomPen.setWidth(0);
             bottomPen.setStyle(Qt::PenStyle(borderBottomStyle()));
             pDC->setPen(bottomPen);
-            pDC->drawLine(QPoint(rectBoard.left(),rectBoard.bottom()),QPoint(rectBoard.right(),rectBoard.bottom()));
+            pDC->drawLine(QPoint(rectBoard.left(),rectBoard.bottom()+1),QPoint(rectBoard.right()+1,rectBoard.bottom()+1));
         }
         pDC->restore();
     }
@@ -481,7 +487,8 @@ bool HGridCellBase::printCell(QPainter* pDC, int nRow, int nCol, QRect rect)
 
     // Draw without clipping so as not to lose text when printed for real
     // DT_NOCLIP removed 01.01.01. Slower, but who cares - we are printing!
-
+    QPen textPen(crFG);
+    pDC->setPen(textPen);
     pDC->drawText(rect,format() | QDT_NOPREFIX,text());
     pDC->restore();
     return true;

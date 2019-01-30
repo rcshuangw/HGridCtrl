@@ -51,8 +51,6 @@ HGridCtrl::HGridCtrl(int nRows, int nCols, int nFixedRows, int nFixedCols,QWidge
     m_MouseMode           = MOUSE_NOTHING;
     m_nGridLines          = GVL_BOTH;
     m_bEditable           = true;
-    //m_bVerticalHeader     = true;
-    //m_bHorizontalHeader   = true;
     m_bListMode           = false;
     m_bSingleRowSelection = false;
     m_bSingleColSelection = false;
@@ -101,6 +99,10 @@ HGridCtrl::HGridCtrl(int nRows, int nCols, int nFixedRows, int nFixedCols,QWidge
     m_bFrameFocus         = true;       // Frame the selected cell?
 
     //m_pRtcDefault = RUNTIME_CLASS(CGridCell);
+    m_bHorizontalHeader = false;
+    m_bVerticalHeader = false;
+    m_bPrintShowGrids = false;
+    m_bPrintColour = false;
 
     setupDefaultCells();
     setGridBkColor(m_crShadow);
@@ -1049,7 +1051,7 @@ void HGridCtrl::onDraw(QPainter* painter)
                         QRect mergerect=rect;
                         if(cellRangeRect(pMergedCell->mergeRange(),mergerect))
 						{
-                            mergerect.adjust(0,0,1,1);
+                            mergerect.adjust(0,0,-1,-1);
                             pMergedCell->setCoords(pCell->mergeCellID().row,pCell->mergeCellID().col);
                             pMergedCell->draw(painter, pCell->mergeCellID().row,pCell->mergeCellID().col, mergerect, true);
 						}
@@ -1060,7 +1062,7 @@ void HGridCtrl::onDraw(QPainter* painter)
                     QRect mergerect=rect;
                     if(cellRangeRect(pCell->mergeRange(),mergerect))
 					{
-                        mergerect.adjust(0,0,1,1);
+                        mergerect.adjust(0,0,-1,-1);
                         pCell->setCoords(row,col);
                         pCell->draw(painter, row, col, mergerect, true);
 					}
@@ -2681,8 +2683,8 @@ bool HGridCtrl::cellRangeRect(const HCellRange& cellRange, QRect& lpRect)
 
     lpRect.setLeft(MinOrigin.x());
     lpRect.setTop(MinOrigin.y());
-    lpRect.setRight(MaxOrigin.x() + columnWidth(cellRange.maxCol()) - 1);
-    lpRect.setBottom(MaxOrigin.y() + rowHeight(cellRange.maxRow()) - 1);
+    lpRect.setRight(MaxOrigin.x() + columnWidth(cellRange.maxCol()) );
+    lpRect.setBottom(MaxOrigin.y() + rowHeight(cellRange.maxRow()) );
 
     return true;
 }
@@ -5569,6 +5571,28 @@ void HGridCtrl::setPrintHeadFoot(QString strHead, QString strFoot)
 {
     m_strHead = strHead;
     m_strFoot = strFoot;
+}
+
+void HGridCtrl::printHeadFoot(QString& strHead,QString& strFoot)
+{
+    strHead = m_strHead;
+    strFoot = m_strFoot;
+}
+
+void HGridCtrl::setPrintOther(bool bHorizontalHeader,bool bVerticalHeader, bool bShowGrids,bool bPrintColour)
+{
+    m_bHorizontalHeader = bHorizontalHeader;
+    m_bVerticalHeader = bVerticalHeader;
+    m_bPrintShowGrids = bShowGrids;
+    m_bPrintColour = bPrintColour;
+}
+
+void HGridCtrl::printOther(bool& bHorizontalHeader,bool& bVerticalHeader, bool& bShowGrids,bool& bPrintColour)
+{
+    bHorizontalHeader = m_bHorizontalHeader;
+    bVerticalHeader = m_bVerticalHeader;
+    bShowGrids = m_bPrintShowGrids;
+    bPrintColour = m_bPrintColour;
 }
 
 /////////////////////////////////////////////////////////////////////////////
