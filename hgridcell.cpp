@@ -119,7 +119,7 @@ void HGridCell::reset()
     m_nFormat = QDT_LEFT|QDT_VCENTER|QDT_SINGLELINE|QDT_NOPREFIX;  // Use default from CGridDefaultCell
     m_crBkClr = QColor(Qt::white);
     m_crFgClr = QColor(Qt::black);
-    m_nMargin = (uint)-1;
+    m_nMargin = 8;
     m_plfFont = QFont(QStringLiteral("宋体"),11, QFont::Normal);
     m_lParam  = quint32(0);
     m_Size    = QSize(85,20);            // Default Size

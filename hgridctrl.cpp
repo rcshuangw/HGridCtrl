@@ -9,9 +9,6 @@
 uint getMouseScrollLines()
 {
     uint nScrollLines = 3;            // reasonable default
-/*#ifdef WIN32 //如果Windows系统就用API函数，其他系统默认
-    SystemParametersInfo (SPI_GETWHEELSCROLLLINES, 0, &nScrollLines, 0);
-#endif*/
     return nScrollLines;
 }
 
@@ -120,13 +117,6 @@ HGridCtrl::HGridCtrl(int nRows, int nCols, int nFixedRows, int nFixedCols,QWidge
     m_SelectedCellMap.clear();
     m_PrevSelectedCellMap.clear();
 
-    /*
-#if !defined(_WIN32_WCE_NO_PRINTING) && !defined(GRIDCONTROL_NO_PRINTING)
-    // EFW - Added to support shaded/unshaded printout and
-    // user-definable margins.
-    m_bShadedPrintOut = true;
-
-#endif*/
     setPrintMarginInfo(2, 2, 4, 4, 1, 1, 1);
     //try
     {
@@ -5321,7 +5311,7 @@ void HGridCtrl::mouseMoveEvent(QMouseEvent *event)
                       m_MouseMode==MOUSE_SELECT_COL ||
                       m_MouseMode==MOUSE_SELECT_ROW)
                     {
-                        setFocusCell(idCurrentCell);
+                        setFocusCell(/*idCurrentCell*/m_LeftClickDownCell);
                     }
                 }
                 break;

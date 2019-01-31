@@ -104,31 +104,18 @@ bool HGridCellBase::draw(QPainter* painter, int nRow, int nCol, QRect rect, bool
     //单元格的边框可以在这里绘制，如果设置了边框颜色和线条格式，就按照设置项绘制，注意：如果绘制bottom要获取同列的下一行表格，top要设置和bottom一样的风格。
     painter->save();
     painter->setBackgroundMode(Qt::TransparentMode);
+    painter->setRenderHint(QPainter::SmoothPixmapTransform);
     //增加绘制表格外框
     QRect rectBoard = rect.adjusted(-1,-1,0,0);
-
-    // Get the default cell implementation for this kind of cell. We use it if this cell
-    // has anything marked as "default"
     HGridDefaultCell *pDefaultCell = (HGridDefaultCell*) defaultCell();
     if (!pDefaultCell)
         return false;
 
-    // Set up text and background colours
     QColor TextClr, TextBkClr;
     TextBkClr = backClr();
     TextClr = textClr();
-    /*TextClr = (textClr() == QColor(QCLR_DEFAULT))? pDefaultCell->textClr() : textClr();
-    if (backClr() == QColor(QCLR_DEFAULT))
-        TextBkClr = pDefaultCell->backClr();
-    else
-    {
-        bEraseBkgnd = true;
-        TextBkClr = backClr();
-    }*/
     if ( isFocused() || isDropHighlighted() )
     {
-        // Always draw even in list mode so that we can tell where the
-        // cursor is at.  Use the highlight colors though.
         //如果选择的cell背景和字体都要变化就要用此功能
         if(state() & GVIS_SELECTED)
         {
@@ -136,12 +123,9 @@ bool HGridCellBase::draw(QPainter* painter, int nRow, int nCol, QRect rect, bool
             TextClr = textClr();
             bEraseBkgnd = true;
         }
-
-        // Don't adjust frame rect if no grid lines so that the
-        // whole cell is enclosed.
         if(pGrid->gridLines() != GVL_NONE)
         {
-            rect.adjust(0,0,-1,-1);
+            rect.adjust(1,1,-1,-1);
         }
 
         if (bEraseBkgnd)
@@ -152,21 +136,18 @@ bool HGridCellBase::draw(QPainter* painter, int nRow, int nCol, QRect rect, bool
 
         if (pGrid->isFrameFocusCell())
         {
-            // Use same color as text to outline the cell so that it shows
-            // up if the background is black.
             QPen fPen(Qt::black);
+            fPen.setWidth(2);
             painter->setPen(fPen);
             painter->drawRect(rect);
         }
 
         painter->setPen(QPen(TextClr));
 
-        // Adjust rect after frame draw if no grid lines
         if(pGrid->gridLines() == GVL_NONE)
         {
             rect.adjust(0,0,1,1);;
         }
-        //rect = rect.marginsAdded(QMargins(0,1,1,1));
     }
     else if ((state() & GVIS_SELECTED))//设置多个单元格选中的颜色，和文字颜色
     {
@@ -186,7 +167,6 @@ bool HGridCellBase::draw(QPainter* painter, int nRow, int nCol, QRect rect, bool
         painter->setPen(QPen(TextClr));//设置画笔的颜色
     }
 
-    // Draw lines only when wanted
     if (isFixed() && pGrid->gridLines() != GVL_NONE)
     {
         HCellID FocusCell = pGrid->focusCell();
@@ -208,12 +188,9 @@ bool HGridCellBase::draw(QPainter* painter, int nRow, int nCol, QRect rect, bool
         painter->save();
         if (bHiliteFixed)
         {
-            //rect.right++; rect.bottom++;
-            //rect.adjust(0,0,-2,-2);
             QBrush brush((QColor("#FDB759")));
             painter->fillRect(rect,brush);
-            //painter->DrawEdge(rect, BDR_SUNKENINNER /*EDGE_RAISED*/, BF_RECT);
-            //rect.DeflateRect(1,1);
+
         }
         else
         {
