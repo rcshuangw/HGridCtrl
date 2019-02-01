@@ -38,9 +38,11 @@ HInPlaceEdit::HInPlaceEdit(QWidget* pParent, const QRect& rect, quint32 dwStyle,
     }
     setText(sInitText);
     setFocus();
+    //setContextMenuPolicy(Qt::NoContextMenu);
     setAttribute(Qt::WA_DeleteOnClose);
     connect(this,&HInPlaceEdit::endEditCell,(HGridCtrl*)pParent,&HGridCtrl::onEndEditCell);
     connect(this, &HInPlaceEdit::editingFinished, this,&HInPlaceEdit::onEditingFinished);
+    installEventFilter(this);
 
 }
 

@@ -6,6 +6,8 @@
 /////////////////////////////////////////////////////////////////////////////
 #include "hgridctrl.h"
 #include <QShortcut>
+#include <QDir>
+#include <QProcessEnvironment>
 uint getMouseScrollLines()
 {
     uint nScrollLines = 3;            // reasonable default
@@ -167,11 +169,11 @@ void HGridCtrl::initGridCtrl()
     //快捷键
 #ifndef QT_NO_CLIPBOARD
     QShortcut *shortCut = new QShortcut(QKeySequence::Cut,this);
-    QObject::connect(shortCut, SIGNAL(activated()), this, SLOT(cut()));
+    QObject::connect(shortCut, SIGNAL(activated()), this, SLOT(onEditCut()));
     QShortcut *shortCopy = new QShortcut(QKeySequence::Copy,this);
-    QObject::connect(shortCopy, SIGNAL(activated()), this, SLOT(copy()));
+    QObject::connect(shortCopy, SIGNAL(activated()), this, SLOT(onEditCopy()));
     QShortcut *shortPaste = new QShortcut(QKeySequence::Paste,this);
-    QObject::connect(shortPaste, SIGNAL(activated()), this, SLOT(paste()));
+    QObject::connect(shortPaste, SIGNAL(activated()), this, SLOT(onEditPaste()));
 #endif
     QShortcut *shortSelectAll = new QShortcut(QKeySequence::SelectAll,this);
     QObject::connect(shortSelectAll, SIGNAL(activated()), this, SLOT(onEditSelectAll()));
@@ -1653,65 +1655,97 @@ void HGridCtrl::cutSelectedText()
 
 }
 
-// Copies text from the selected cells to the clipboard
-QString HGridCtrl::copyTextFromGrid()
+QString HGridCtrl::getClipboardFile()
+{
+    QString clipboardPath = QProcessEnvironment::systemEnvironment().value("wfsystem_dir");
+    clipboardPath.append("/temp/grid");
+    QDir dirClipboard(clipboardPath);
+    if(!dirClipboard.exists())
+        dirClipboard.mkdir(clipboardPath);
+    clipboardPath.append("/ctrlgrid.tmp");
+    return clipboardPath;
+}
+
+//复制表格中选择部分的单元格内容
+void HGridCtrl::copyTextFromGrid()
 {
     HCellRange Selection = selectedCellRange();
     if (!isValid(Selection))
-        return NULL;
+        return;
 
-    //if (isVirtualMode())
-    //    SendCacheHintToParent(Selection);
-
-    //获取选择文字 返回
-    // Get a tab delimited string to copy to cache
-    QString str;
+    QByteArray bytes;
+    QDataStream stream(&bytes,QIODevice::WriteOnly);
+    stream << Selection.rowSpan() << Selection.colSpan();//选中单元格的数目
     HGridCellBase *pCell;
     for (int row = Selection.minRow(); row <= Selection.maxRow(); row++)
     {
-        // don't copy hidden cells
         if( m_arRowHeights[row] <= 0 )
             continue;
-
-        str = "";
+        //复制行的所有列
         for (int col = Selection.minCol(); col <= Selection.maxCol(); col++)
         {
-            // don't copy hidden cells
             if( m_arColWidths[col] <= 0 )
                 continue;
 
             pCell = getCell(row, col);
             if (pCell &&(pCell->state() & GVIS_SELECTED))
             {
-                str += pCell->text();
+                pCell->save(QDataStream::Qt_5_7,&stream);
             }
-            if (col != Selection.maxCol())
-                str += tr("\t");
         }
-        if (row != Selection.maxRow())
-            str += tr("\n");
     }
 
-    //if (GetVirtualMode())
-    //    SendCacheHintToParent(HCellRange(-1,-1,-1,-1));
-    return str;
+    QString clipboardPath = getClipboardFile();
+    QFile file(clipboardPath);
+    if(file.open(QIODevice::WriteOnly))
+    {
+        QDataStream cbStream(&file);
+        cbStream.writeRawData(bytes.data(),bytes.length());
+        file.close();
+    }
 }
 
 // Pastes text from the clipboard to the selected cells
-bool HGridCtrl::pasteTextToGrid(HCellID& cell, const QString& strCopyText, bool bSelectPastedCells)
+bool HGridCtrl::pasteTextToGrid(HCellID& cell,  bool bSelectPastedCells)
 {
     if (!isValid(cell) || !isCellEditable(cell))
         return false;
 
-    QString strText = strCopyText;
+    QString clipboardPath = getClipboardFile();
+    QFile file(clipboardPath);
+    if(!file.exists() || !file.open(QIODevice::ReadOnly))
+        return false;
+    QDataStream stream(&file);
+    int rowSpan,colSpan;
+    stream>>rowSpan;
+    stream>>colSpan;
+    HCellRange PasteRange(cell.row, cell.col,-1,-1);
+    PasteRange.setMaxRow(cell.row + rowSpan);
+    PasteRange.setMaxCol(cell.col + colSpan);
+    if(cell.row + rowSpan > rowCount() - 1)
+        PasteRange.setMaxRow(rowCount()-1);
+    if(cell.col + colSpan > columnCount() - 1)
+        PasteRange.setMaxCol(columnCount()-1);
+    HGridCellBase *pCell;
+    for(int iRowVis = PasteRange.minRow();iRowVis <= PasteRange.maxRow();iRowVis++)
+    {
+        for(int iColVis = PasteRange.minCol(); iColVis <= PasteRange.maxCol();iColVis++)
+        {
+            HCellID targetCell(iRowVis, iColVis);
+            pCell = getCell(iRowVis, iColVis);
+            if (isValid(iRowVis,iColVis) && pCell)
+            {
+                pCell->load(QDataStream::Qt_5_7,&stream);
+                //还要判断pCell是不是合并单元格
+                // Make sure cell is not selected to avoid data loss
+                setItemState(targetCell.row, targetCell.col,itemState(targetCell.row, targetCell.col) & ~GVIS_SELECTED);
+            }
+        }
+    }
 
-    // Parse text data and set in cells...
-    //strText.LockBuffer();
-    QString strLine = strText;
-    int nLine = 0;
 
     // Find the end of the first line
-    HCellRange PasteRange(cell.row, cell.col,-1,-1);
+   /* HCellRange PasteRange(cell.row, cell.col,-1,-1);
     int nIndex;
     do
     {
@@ -1778,7 +1812,7 @@ bool HGridCtrl::pasteTextToGrid(HCellID& cell, const QString& strCopyText, bool 
     } while (nIndex >= 0);
 
     //strText.UnlockBuffer();
-
+*/
 	if (bSelectPastedCells)
         setSelectedRange(PasteRange, true);
 	else
@@ -1932,26 +1966,89 @@ bool HGridCtrl::OnDrop(COleDataObject* pDataObject, DROPEFFECT dropEffect,
 }
 #endif
 */
-//注意：函数只能对文字进行操作
+//注意：不仅仅是对文字操作，单元格的格式也要保存住
 #ifndef QT_NO_CLIPBOARD
 void HGridCtrl::onEditCut()
 {
-    return;
     if (!isEditable())
         return;
-    QString strCopy = copyTextFromGrid();
-    if (!strCopy.isEmpty())
-        return;
-    QApplication::clipboard()->setText(strCopy);
+
+    HCellRange cellRange = selectedCellRange();
+
+    // Get the top-left selected cell, or the Focus cell, or the topleft (non-fixed) cell
+    HCellID cell;
+    if (cellRange.isValid())
+    {
+        cell.row = cellRange.minRow();
+        cell.col = cellRange.minCol();
+    }
+    else
+    {
+        cell = focusCell();
+        if (!isValid(cell))
+            cell = topleftNonFixedCell();
+        if (!isValid(cell))
+            return;
+    }
+
+    // If a cell is being edited, then call it's edit window paste function.
+    if ( isItemEditing(cell.row, cell.col) )
+    {
+        HGridCellBase* pCell = getCell(cell.row, cell.col);
+        Q_ASSERT(pCell);
+        if (!pCell) return;
+
+        QWidget* pEditWnd = pCell->editWnd();
+        if ( pEditWnd && pEditWnd->metaObject()->className() == "QLineEdit" )
+        {
+            ((QLineEdit*)pEditWnd)->cut();
+            return;
+        }
+    }
+
+    copyTextFromGrid();
     cutSelectedText();
 }
 
 void HGridCtrl::onEditCopy()
 {
-    QString strCopy = copyTextFromGrid();
-    if (!strCopy.isEmpty())
+    if (!isEditable())
         return;
-    QApplication::clipboard()->setText(strCopy);
+    m_bLineEditCopy = false;
+    HCellRange cellRange = selectedCellRange();
+    // Get the top-left selected cell, or the Focus cell, or the topleft (non-fixed) cell
+    HCellID cell;
+    if (cellRange.isValid())
+    {
+        cell.row = cellRange.minRow();
+        cell.col = cellRange.minCol();
+    }
+    else
+    {
+        cell = focusCell();
+        if (!isValid(cell))
+            cell = topleftNonFixedCell();
+        if (!isValid(cell))
+            return;
+    }
+
+    // If a cell is being edited, then call it's edit window paste function.
+    if ( isItemEditing(cell.row, cell.col) )
+    {
+        HGridCellBase* pCell = getCell(cell.row, cell.col);
+        Q_ASSERT(pCell);
+        if (!pCell) return;
+
+        QWidget* pEditWnd = pCell->editWnd();
+        if ( pEditWnd && pEditWnd->metaObject()->className() == "QLineEdit" )
+        {
+            ((QLineEdit*)pEditWnd)->copy();
+            m_bLineEditCopy = true;
+            return;
+        }
+    }
+
+    copyTextFromGrid();
 }
 
 void HGridCtrl::onEditPaste()
@@ -1982,7 +2079,7 @@ void HGridCtrl::onEditPaste()
     {
         HGridCellBase* pCell = getCell(cell.row, cell.col);
         Q_ASSERT(pCell);
-        if (!pCell) return;
+        if (!pCell || !m_bLineEditCopy) return;
 
         QWidget* pEditWnd = pCell->editWnd();
         if ( pEditWnd && pEditWnd->metaObject()->className() == "QLineEdit" )
@@ -1993,12 +2090,9 @@ void HGridCtrl::onEditPaste()
     }
 
     // 从选择的单元格开始进行复制
-    const QClipboard *clipboard = QApplication::clipboard();
-    const QMimeData *mimeData = clipboard->mimeData();
-    if (mimeData->hasText())
-    {
-        pasteTextToGrid(cell,mimeData->text());
-    }
+    if(!m_bLineEditCopy)
+        pasteTextToGrid(cell);
+
 }
 #endif
 
@@ -5518,6 +5612,23 @@ void HGridCtrl::mouseDoubleClickEvent(QMouseEvent *event)
 
     QAbstractScrollArea::mouseDoubleClickEvent(event);
 }
+
+
+bool HGridCtrl::eventFilter(QObject *obj, QEvent *event)
+{
+    HGridCellBase* pCell = getCell(focusCell());
+    HInPlaceEdit* pEdit = (HInPlaceEdit*)pCell->editWnd();
+    if (pEdit && obj == pEdit) {
+            if (event->type() == QEvent::KeyPress) {
+                QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
+                if (keyEvent->matches(QKeySequence::Paste)) {
+                    m_bLineEditCopy = true;
+                    return true;
+                }
+            }
+    }
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // CGridCtrl printing
 
