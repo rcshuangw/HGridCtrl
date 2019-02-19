@@ -1,10 +1,12 @@
-// InPlaceEdit.cpp : implementation file
+﻿// InPlaceEdit.cpp : implementation file
 //
 //
 /////////////////////////////////////////////////////////////////////////////
 #include "hinplaceedit.h"
 #include "hgridctrl.h"
 #include "hgridcell.h"
+#include <QMenu>
+#include <QShortcut>
 /////////////////////////////////////////////////////////////////////////////
 // HInPlaceEdit
 
@@ -38,11 +40,10 @@ HInPlaceEdit::HInPlaceEdit(QWidget* pParent, const QRect& rect, quint32 dwStyle,
     }
     setText(sInitText);
     setFocus();
-    //setContextMenuPolicy(Qt::NoContextMenu);
+    //setContextMenuPolicy(Qt::DefaultContextMenu);
     setAttribute(Qt::WA_DeleteOnClose);
     connect(this,&HInPlaceEdit::endEditCell,(HGridCtrl*)pParent,&HGridCtrl::onEndEditCell);
     connect(this, &HInPlaceEdit::editingFinished, this,&HInPlaceEdit::onEditingFinished);
-    installEventFilter(this);
 
 }
 
@@ -54,6 +55,7 @@ void HInPlaceEdit::keyReleaseEvent(QKeyEvent *event)
 HInPlaceEdit::~HInPlaceEdit()
 {
 }
+
 
 void HInPlaceEdit::onEditingFinished()
 {

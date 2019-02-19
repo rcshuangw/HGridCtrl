@@ -140,6 +140,7 @@ HGridCtrl::HGridCtrl(int nRows, int nCols, int nFixedRows, int nFixedCols,QWidge
     connect(horizontalScrollBar(),&QScrollBar::valueChanged,this,&HGridCtrl::onHorizontalScrollBarChanged);
     connect(verticalScrollBar(),&QScrollBar::valueChanged,this,&HGridCtrl::onVerticalScrollBarChanged);
     initGridCtrl();
+    installEventFilter(this);
 }
 
 //no
@@ -1720,8 +1721,8 @@ bool HGridCtrl::pasteTextToGrid(HCellID& cell,  bool bSelectPastedCells)
     stream>>rowSpan;
     stream>>colSpan;
     HCellRange PasteRange(cell.row, cell.col,-1,-1);
-    PasteRange.setMaxRow(cell.row + rowSpan);
-    PasteRange.setMaxCol(cell.col + colSpan);
+    PasteRange.setMaxRow(cell.row + rowSpan-1);
+    PasteRange.setMaxCol(cell.col + colSpan-1);
     if(cell.row + rowSpan > rowCount() - 1)
         PasteRange.setMaxRow(rowCount()-1);
     if(cell.col + colSpan > columnCount() - 1)
@@ -1733,9 +1734,33 @@ bool HGridCtrl::pasteTextToGrid(HCellID& cell,  bool bSelectPastedCells)
         {
             HCellID targetCell(iRowVis, iColVis);
             pCell = getCell(iRowVis, iColVis);
-            if (isValid(iRowVis,iColVis) && pCell)
+            if (pCell && isValid(iRowVis,iColVis) )
             {
                 pCell->load(QDataStream::Qt_5_7,&stream);
+                if(pCell->isMerged())
+                {
+                    HCellRange oldRange = pCell->mergeRange();
+                    HCellRange newRange(targetCell.row,targetCell.col,targetCell.row+oldRange.rowSpan()-1,targetCell.col+oldRange.colSpan()-1);
+                    for(int row = newRange.minRow();row <= newRange.maxRow();row++)
+                    {
+                        for(int col = newRange.minCol();col <= newRange.maxCol();col++)
+                        {
+                            HGridCellBase *pCell = (HGridCellBase*) getCell(row,col);
+                            pCell->setShow(false);
+                            //开始行列记录合并范围
+                            if(row == targetCell.row && col == targetCell.col)continue;
+                            else
+                            {
+                                //其他行列记录初始行列
+                                HCellID cell(iRowVis,iColVis);
+                                pCell->setMergeCellID(cell);
+                            }
+
+                        }
+                    }
+                    pCell->setMergeRange(newRange);
+                }
+
                 //还要判断pCell是不是合并单元格
                 // Make sure cell is not selected to avoid data loss
                 setItemState(targetCell.row, targetCell.col,itemState(targetCell.row, targetCell.col) & ~GVIS_SELECTED);
@@ -2014,7 +2039,6 @@ void HGridCtrl::onEditCopy()
 {
     if (!isEditable())
         return;
-    m_bLineEditCopy = false;
     HCellRange cellRange = selectedCellRange();
     // Get the top-left selected cell, or the Focus cell, or the topleft (non-fixed) cell
     HCellID cell;
@@ -2043,7 +2067,6 @@ void HGridCtrl::onEditCopy()
         if ( pEditWnd && pEditWnd->metaObject()->className() == "QLineEdit" )
         {
             ((QLineEdit*)pEditWnd)->copy();
-            m_bLineEditCopy = true;
             return;
         }
     }
@@ -2079,7 +2102,7 @@ void HGridCtrl::onEditPaste()
     {
         HGridCellBase* pCell = getCell(cell.row, cell.col);
         Q_ASSERT(pCell);
-        if (!pCell || !m_bLineEditCopy) return;
+        if (!pCell) return;
 
         QWidget* pEditWnd = pCell->editWnd();
         if ( pEditWnd && pEditWnd->metaObject()->className() == "QLineEdit" )
@@ -2090,8 +2113,7 @@ void HGridCtrl::onEditPaste()
     }
 
     // 从选择的单元格开始进行复制
-    if(!m_bLineEditCopy)
-        pasteTextToGrid(cell);
+    pasteTextToGrid(cell);
 
 }
 #endif
@@ -5611,22 +5633,6 @@ void HGridCtrl::mouseDoubleClickEvent(QMouseEvent *event)
     }
 
     QAbstractScrollArea::mouseDoubleClickEvent(event);
-}
-
-
-bool HGridCtrl::eventFilter(QObject *obj, QEvent *event)
-{
-    HGridCellBase* pCell = getCell(focusCell());
-    HInPlaceEdit* pEdit = (HInPlaceEdit*)pCell->editWnd();
-    if (pEdit && obj == pEdit) {
-            if (event->type() == QEvent::KeyPress) {
-                QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
-                if (keyEvent->matches(QKeySequence::Paste)) {
-                    m_bLineEditCopy = true;
-                    return true;
-                }
-            }
-    }
 }
 
 /////////////////////////////////////////////////////////////////////////////
