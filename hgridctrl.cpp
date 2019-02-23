@@ -1676,7 +1676,7 @@ void HGridCtrl::copyTextFromGrid()
 
     QByteArray bytes;
     QDataStream stream(&bytes,QIODevice::WriteOnly);
-    stream << Selection.rowSpan() << Selection.colSpan();//选中单元格的数目
+    stream << Selection.minRow()<<Selection.maxRow()<<Selection.minCol()<<Selection.maxCol();//Selection.rowSpan() << Selection.colSpan();//选中单元格的数目
     HGridCellBase *pCell;
     for (int row = Selection.minRow(); row <= Selection.maxRow(); row++)
     {
@@ -1718,15 +1718,26 @@ bool HGridCtrl::pasteTextToGrid(HCellID& cell,  bool bSelectPastedCells)
         return false;
     QDataStream stream(&file);
     int rowSpan,colSpan;
-    stream>>rowSpan;
-    stream>>colSpan;
+    int oriMinRow,oriMaxRow,oriMinCol,oriMaxCol;
+    //stream>>rowSpan;
+    //stream>>colSpan;
+    stream>>oriMinRow;
+    stream>>oriMaxRow;
+    stream>>oriMinCol;
+    stream>>oriMaxCol;
+    rowSpan = oriMaxRow - oriMinRow + 1;
+    colSpan = oriMaxCol - oriMinCol + 1;
     HCellRange PasteRange(cell.row, cell.col,-1,-1);
     PasteRange.setMaxRow(cell.row + rowSpan-1);
     PasteRange.setMaxCol(cell.col + colSpan-1);
     if(cell.row + rowSpan > rowCount() - 1)
-        PasteRange.setMaxRow(rowCount()-1);
+        return false;
     if(cell.col + colSpan > columnCount() - 1)
-        PasteRange.setMaxCol(columnCount()-1);
+        return false;
+
+
+    //1.先要判断复制的区域是否存在合并单元格，如果存在合并单元格，但复制的区域没有把合并单元格全部包含进去，不允许复制
+    //2.如果复制的区域大于或者拷贝的区域，则完全复制拷贝区域内容，此时复制区域的任何内容都不要了
     HGridCellBase *pCell;
     for(int iRowVis = PasteRange.minRow();iRowVis <= PasteRange.maxRow();iRowVis++)
     {
@@ -1736,6 +1747,11 @@ bool HGridCtrl::pasteTextToGrid(HCellID& cell,  bool bSelectPastedCells)
             pCell = getCell(iRowVis, iColVis);
             if (pCell && isValid(iRowVis,iColVis) )
             {
+                HCellRange startRange;
+                if(pCell->isMerged())
+                {
+                    startRange = pCell->mergeRange();
+                }
                 pCell->load(QDataStream::Qt_5_7,&stream);
                 if(pCell->isMerged())
                 {
@@ -1755,10 +1771,32 @@ bool HGridCtrl::pasteTextToGrid(HCellID& cell,  bool bSelectPastedCells)
                                 HCellID cell(iRowVis,iColVis);
                                 pCell->setMergeCellID(cell);
                             }
-
                         }
                     }
                     pCell->setMergeRange(newRange);
+                }
+                else
+                {
+                    if(startRange.count() > 1)
+                    {
+                        for(int row = startRange.minRow();row <= startRange.maxRow();row++)
+                        {
+                            for(int col = startRange.minCol();col <= startRange.maxCol();col++)
+                            {
+                                HGridCellBase *pCell = (HGridCellBase*) getCell(row,col);
+                                pCell->setShow(false);
+                                //开始行列记录合并范围
+                                if(row == targetCell.row && col == targetCell.col)continue;
+                                else
+                                {
+                                    //其他行列记录初始行列
+                                    HCellID cell(iRowVis,iColVis);
+                                    pCell->setMergeCellID(cell);
+                                }
+                            }
+                        }
+                        pCell->setMergeRange(startRange);
+                    }
                 }
 
                 //还要判断pCell是不是合并单元格
