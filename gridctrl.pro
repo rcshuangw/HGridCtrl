@@ -11,7 +11,7 @@ QT += printsupport
 TARGET = gridctrl
 TEMPLATE = lib
 DEFINES += GRIDCTRL_DLL
-DESTDIR = ../../lib
+DESTDIR = ../../bin
 INCLUDEPATH += \
                 ../include \
 

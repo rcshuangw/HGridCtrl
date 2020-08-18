@@ -240,7 +240,7 @@ void HGridCtrlWidget::setText(int row,int col,const QString& s)
 void HGridCtrlWidget::rowColRefresh()
 {
     if(m_bHorizontalHeader)
-        m_pGridCtrl->setColumnWidth(0,25);
+        m_pGridCtrl->setColumnWidth(0,30);
     else
         m_pGridCtrl->setColumnWidth(0,0);
 
@@ -267,6 +267,7 @@ void HGridCtrlWidget::setFormat(quint32 f)
                 pCell->setFormat(f);
         }
     }
+    update();
 }
 
 quint32 HGridCtrlWidget::format()
@@ -404,7 +405,6 @@ void HGridCtrlWidget::setBorder(GV_BORDER_ITEM* item)
                     }
                 }
 
-
                 if(rangeRow == range.maxRow())//最大行的下一个单元格
                 {
                     HGridCellBase* pRowOutCell = m_pGridCtrl->getCell(rangeRow+1,rangeCol);
@@ -504,16 +504,22 @@ void HGridCtrlWidget::setFont(const QFont& font)
     HCellRange range = m_pGridCtrl->selectedCellRange();
     if(!range.isValid())
         return;
+    QRect rect1;
+    m_pGridCtrl->cellRangeRect(range,rect1);
+    bool bok = false;
     for(int rangeRow = range.minRow(); rangeRow <= range.maxRow();rangeRow++)
     {
         for(int rangeCol = range.minCol();rangeCol <= range.maxCol();rangeCol++)
         {
             HGridCellBase* pCell = m_pGridCtrl->getCell(rangeRow,rangeCol);
             if(NULL == pCell) return;
-
-                pCell->setFont(font);
+            pCell->setFont(font);
+            bok = true;
         }
     }
+    //if(bok)
+    //    update(rect1);
+    update();
 }
 
 QFont HGridCtrlWidget::font()
@@ -530,6 +536,9 @@ void HGridCtrlWidget::setTextColor(const QString& s)
     HCellRange range = m_pGridCtrl->selectedCellRange();
     if(!range.isValid())
         return;
+    QRect rect1;
+    m_pGridCtrl->cellRangeRect(range,rect1);
+    bool bok = false;
     for(int rangeRow = range.minRow(); rangeRow <= range.maxRow();rangeRow++)
     {
         for(int rangeCol = range.minCol();rangeCol <= range.maxCol();rangeCol++)
@@ -538,8 +547,11 @@ void HGridCtrlWidget::setTextColor(const QString& s)
             if(NULL == pCell) return;
 
                 pCell->setTextClr(s);
+                bok = true;
         }
     }
+    if(bok)
+        update(rect1);
 }
 
 QString HGridCtrlWidget::textColor()
@@ -556,16 +568,22 @@ void HGridCtrlWidget::setTextBkColor(const QString& s)
     HCellRange range = m_pGridCtrl->selectedCellRange();
     if(!range.isValid())
         return;
+    QRect rect1;
+    m_pGridCtrl->cellRangeRect(range,rect1);
+    bool bok = false;
     for(int rangeRow = range.minRow(); rangeRow <= range.maxRow();rangeRow++)
     {
         for(int rangeCol = range.minCol();rangeCol <= range.maxCol();rangeCol++)
         {
             HGridCellBase* pCell = m_pGridCtrl->getCell(rangeRow,rangeCol);
             if(NULL == pCell) return;
+            pCell->setBackClr(s);
+            bok = true;
 
-                pCell->setBackClr(s);
         }
     }
+    if(bok)
+        update(rect1);
 }
 
 QString HGridCtrlWidget::textBkColor()

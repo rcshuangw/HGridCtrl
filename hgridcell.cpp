@@ -118,11 +118,11 @@ void HGridCell::reset()
 
     m_nFormat = QDT_LEFT|QDT_VCENTER|QDT_SINGLELINE|QDT_NOPREFIX;  // Use default from CGridDefaultCell
     m_crBkClr = QColor(Qt::white);
-    m_crFgClr = QColor(Qt::black);
+    m_crFgClr = QColor(Qt::blue);
     m_nMargin = 8;
     m_plfFont = QFont(QStringLiteral("宋体"),11, QFont::Normal);
     m_lParam  = quint32(0);
-    m_Size    = QSize(85,20);            // Default Size
+    m_Size    = QSize(30,20);            // Default Size
     //m_bBorderOutSide= false;
     m_bLeftBorder   = false;
     m_bTopBorder    = false;
@@ -150,7 +150,7 @@ void HGridCell::setFont(const QFont &font)
     QFontMetrics fontMetrics(m_plfFont);
     setMargin(fontMetrics.size(Qt::TextSingleLine,tr(" ")).width());
     m_Size = fontMetrics.size(Qt::TextSingleLine,tr(" XXXXXXXXXXXX "));
-    m_Size.setHeight(m_Size.height() * 3/2);
+    m_Size.setHeight(m_Size.height() * 4/3);
 }
 
 quint32 HGridCell::format()  const
@@ -214,19 +214,18 @@ void HGridCell::OnEndEdit()
 // HGridDefaultCell
 HGridDefaultCell::HGridDefaultCell()
 {
-
     m_nFormat = QDT_LEFT|QDT_VCENTER|QDT_SINGLELINE|QDT_NOPREFIX;
     m_crFgClr = QColor(Qt::black);
     m_crBkClr = QColor(Qt::white);
-    m_Size    = QSize(85,20);
+    m_Size    = QSize(30,20);
     m_dwStyle = 0;
     m_Font = QFont("宋体",11,QFont::Normal);
 
     QFontMetrics fontMetrics(m_Font);
     setMargin(fontMetrics.size(Qt::TextSingleLine,tr(" ")).width());
 
-    m_Size = fontMetrics.size(Qt::TextSingleLine,tr(" XXXXXXXXXXXX "));
-    m_Size.setHeight(m_Size.height() * 3/2);
+    m_Size = fontMetrics.size(Qt::TextSingleLine,tr(" XXXXXXX "));
+    m_Size.setHeight(m_Size.height() * 4/3);
 }
 
 HGridDefaultCell::~HGridDefaultCell()
@@ -239,6 +238,6 @@ void HGridDefaultCell::setFont(const QFont& plf)
     // Get the font size and hence the default cell size
     QFontMetrics fontMetrics(plf);
     setMargin(fontMetrics.size(Qt::TextSingleLine,tr(" ")).width());
-    m_Size = fontMetrics.size(Qt::TextSingleLine,tr(" XXXXXXXXXXXX "));
+    m_Size = fontMetrics.size(Qt::TextSingleLine,tr(" XXXXXXX "));
     m_Size.setHeight(m_Size.height() * 3/2);
 }

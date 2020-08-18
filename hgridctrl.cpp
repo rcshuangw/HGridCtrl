@@ -30,9 +30,9 @@ HGridCtrl::HGridCtrl(int nRows, int nCols, int nFixedRows, int nFixedCols,QWidge
 
     m_crWindowText        = QColor(QCOLOR_WINDOWTEXT);
     m_crWindowColour      = QColor(QCOLOR_WINDOW);
-    m_cr3DFace            = QColor(218,226,236);//QColor(QCOLOR_3DFACE);
+    m_cr3DFace            = QColor(230,230,230);//QColor(QCOLOR_3DFACE);
     m_crShadow            = QColor(QCOLOR_3DSHADOW);
-    m_crGridLineColour    = QColor(192,192,192);
+    m_crGridLineColour    = QColor(212,212,212);
 
     m_nRows               = 0;
     m_nCols               = 0;
@@ -238,7 +238,7 @@ void HGridCtrl::eraseBkgnd(QPainter* pDC)
     int nFixedColumnWidth = fixedColumnWidth();
     int nFixedRowHeight = fixedRowHeight();
 
-    // Draw Fixed row/column background
+    // Draw Fixed row/column background 行列头的背景色
     if (ClipRect.left() < nFixedColumnWidth && ClipRect.top() < nFixedRowHeight)
         pDC->fillRect(QRect(ClipRect.left(), ClipRect.top(),
                       nFixedColumnWidth, nFixedRowHeight),
@@ -1735,10 +1735,105 @@ bool HGridCtrl::pasteTextToGrid(HCellID& cell,  bool bSelectPastedCells)
     if(cell.col + colSpan > columnCount() - 1)
         return false;
 
+    HGridCellBase *pCell;
+    bool bCopy = true;
+    for(int i = PasteRange.minRow(); i <= PasteRange.maxRow();i++)
+    {
+        pCell = getCell(i,PasteRange.minCol());
+        if(pCell)
+        {
+            HCellRange leftRange;
+            if(pCell->isMerged())
+            {
+                leftRange = pCell->mergeRange();
+            }
+            else if(pCell->isMergeWithOthers())
+            {
+                leftRange = getCell(pCell->mergeCellID())->mergeRange();
+            }
+            if(leftRange.isValid())
+            {
+                if(leftRange.minCol() < PasteRange.minCol())
+                {
+                    bCopy = false;
+                    break;
+                }
+            }
+        }
+        pCell = getCell(i,PasteRange.maxCol());
+        if(pCell)
+        {
+            HCellRange leftRange;
+            if(pCell->isMerged())
+            {
+                leftRange = pCell->mergeRange();
+            }
+            else if(pCell->isMergeWithOthers())
+            {
+                leftRange = getCell(pCell->mergeCellID())->mergeRange();
+            }
+            if(leftRange.isValid())
+            {
+                if(leftRange.maxCol() > PasteRange.maxCol())
+                {
+                    bCopy = false;
+                    break;
+                }
+            }
+        }
+    }
+    if(!bCopy) return false;
+    for(int i = PasteRange.minCol(); i <= PasteRange.maxCol();i++)
+    {
+        pCell = getCell(PasteRange.minRow(),i);
+        if(pCell)
+        {
+            HCellRange leftRange;
+            if(pCell->isMerged())
+            {
+                leftRange = pCell->mergeRange();
+            }
+            else if(pCell->isMergeWithOthers())
+            {
+                leftRange = getCell(pCell->mergeCellID())->mergeRange();
+            }
+            if(leftRange.isValid())
+            {
+                if(leftRange.minRow() < PasteRange.minRow())
+                {
+                    bCopy = false;
+                    break;
+                }
+            }
+        }
+
+        pCell = getCell(PasteRange.maxRow(),i);
+        if(pCell)
+        {
+            HCellRange leftRange;
+            if(pCell->isMerged())
+            {
+                leftRange = pCell->mergeRange();
+            }
+            else if(pCell->isMergeWithOthers())
+            {
+                leftRange = getCell(pCell->mergeCellID())->mergeRange();
+            }
+            if(leftRange.isValid())
+            {
+                if(leftRange.maxRow() > PasteRange.maxRow())
+                {
+                    bCopy = false;
+                    break;
+                }
+            }
+        }
+    }
+    if(!bCopy) return false;
 
     //1.先要判断复制的区域是否存在合并单元格，如果存在合并单元格，但复制的区域没有把合并单元格全部包含进去，不允许复制
     //2.如果复制的区域大于或者拷贝的区域，则完全复制拷贝区域内容，此时复制区域的任何内容都不要了
-    HGridCellBase *pCell;
+
     for(int iRowVis = PasteRange.minRow();iRowVis <= PasteRange.maxRow();iRowVis++)
     {
         for(int iColVis = PasteRange.minCol(); iColVis <= PasteRange.maxCol();iColVis++)
@@ -1747,11 +1842,6 @@ bool HGridCtrl::pasteTextToGrid(HCellID& cell,  bool bSelectPastedCells)
             pCell = getCell(iRowVis, iColVis);
             if (pCell && isValid(iRowVis,iColVis) )
             {
-                HCellRange startRange;
-                if(pCell->isMerged())
-                {
-                    startRange = pCell->mergeRange();
-                }
                 pCell->load(QDataStream::Qt_5_7,&stream);
                 if(pCell->isMerged())
                 {
@@ -1768,7 +1858,7 @@ bool HGridCtrl::pasteTextToGrid(HCellID& cell,  bool bSelectPastedCells)
                             else
                             {
                                 //其他行列记录初始行列
-                                HCellID cell(iRowVis,iColVis);
+                                HCellID cell(targetCell.row,targetCell.col);
                                 pCell->setMergeCellID(cell);
                             }
                         }
@@ -1777,7 +1867,7 @@ bool HGridCtrl::pasteTextToGrid(HCellID& cell,  bool bSelectPastedCells)
                 }
                 else
                 {
-                    if(startRange.count() > 1)
+                    /*if(startRange.count() > 1)
                     {
                         for(int row = startRange.minRow();row <= startRange.maxRow();row++)
                         {
@@ -1796,7 +1886,7 @@ bool HGridCtrl::pasteTextToGrid(HCellID& cell,  bool bSelectPastedCells)
                             }
                         }
                         pCell->setMergeRange(startRange);
-                    }
+                    }*/
                 }
 
                 //还要判断pCell是不是合并单元格
@@ -2787,8 +2877,8 @@ bool HGridCtrl::cellRect(int nRow, int nCol, QRect& pRect)
 	{
         pRect.setLeft(CellOrigin.x());
         pRect.setTop(CellOrigin.y());
-        pRect.setRight(CellOrigin.x() + columnWidth(nCol)-1);
-        pRect.setBottom(CellOrigin.y() + rowHeight(nRow)-1);
+        pRect.setRight(CellOrigin.x() + columnWidth(nCol));
+        pRect.setBottom(CellOrigin.y() + rowHeight(nRow));
 	}
 	else
 	{
@@ -4216,7 +4306,7 @@ bool HGridCtrl::setItemFont(int nRow, int nCol, const QFont& lf)
         return false;
     
     pCell->setFont(lf);
-    
+
     return true;
 }
 

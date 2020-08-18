@@ -106,14 +106,22 @@ bool HGridCellBase::draw(QPainter* painter, int nRow, int nCol, QRect rect, bool
     painter->setBackgroundMode(Qt::TransparentMode);
     painter->setRenderHint(QPainter::SmoothPixmapTransform);
     //增加绘制表格外框
+    QRect rectText =rect;
     QRect rectBoard = rect.adjusted(-1,-1,0,0);
     HGridDefaultCell *pDefaultCell = (HGridDefaultCell*) defaultCell();
     if (!pDefaultCell)
         return false;
 
     QColor TextClr, TextBkClr;
-    TextBkClr = backClr();
-    TextClr = textClr();
+    TextClr = (textClr() == QColor(Qt::black))? pDefaultCell->textClr() : textClr();
+    if (backClr() == QColor(Qt::black))
+        TextBkClr = pDefaultCell->backClr();
+    else
+    {
+        bEraseBkgnd = true;
+        TextBkClr = backClr();
+    }
+
     if ( isFocused() || isDropHighlighted() )
     {
         //如果选择的cell背景和字体都要变化就要用此功能
@@ -125,7 +133,8 @@ bool HGridCellBase::draw(QPainter* painter, int nRow, int nCol, QRect rect, bool
         }
         if(pGrid->gridLines() != GVL_NONE)
         {
-            rect.adjust(1,1,-1,-1);
+           //rect.adjust(0,0,-1,-1);
+            rect.adjust(-1,-1,-1,-1);
         }
 
         if (bEraseBkgnd)
@@ -136,24 +145,40 @@ bool HGridCellBase::draw(QPainter* painter, int nRow, int nCol, QRect rect, bool
 
         if (pGrid->isFrameFocusCell())
         {
-            QPen fPen(Qt::black);
-            fPen.setWidth(2);
+            QPen fPen(QColor(33,115,70));
+            fPen.setWidth(1);
             painter->setPen(fPen);
             painter->drawRect(rect);
         }
-
-        painter->setPen(QPen(TextClr));
-
         if(pGrid->gridLines() == GVL_NONE)
         {
-            rect.adjust(0,0,1,1);;
+           //rect.adjust(0,0,-1,-1);
+            rect.adjust(1,1,1,1);
         }
+        painter->setPen(QPen(TextClr));
     }
     else if ((state() & GVIS_SELECTED))//设置多个单元格选中的颜色，和文字颜色
     {
-        painter->setCompositionMode(QPainter::CompositionMode_Difference);
-        painter->fillRect(rect, QColor(QCOLOR_HIGHLIGHT));//也可以用brush
-        painter->setPen(QPen(QColor(QCOLOR_HIGHLIGHTTEXT)));//设置画笔的颜色
+        rect.adjust(0,0,-1,-1);
+        painter->fillRect(rect, QColor(198,198,198));//也可以用brush
+        //画外面大框
+        //第一个选中的 先把颜色还原
+        QRect leftTopRect;
+        pGrid->cellRect(pGrid->m_LeftClickDownCell,leftTopRect);
+        leftTopRect.adjust(-1,-1,-2,-2);
+        QPen fPen(QColor(212,212,212));
+        fPen.setWidth(1);
+        painter->setPen(fPen);
+        painter->drawRect(leftTopRect);
+
+        //再画大框
+        fPen.setColor(QColor(33,115,70));
+        fPen.setWidth(1);
+        painter->setPen(fPen);
+        QRect lpRect;
+        pGrid->cellRangeRect(pGrid->selectedCellRange(), lpRect);
+        lpRect.adjust(-1,-1,-2,-2);
+        painter->drawRect(lpRect);
     }
     else
     {
@@ -188,7 +213,7 @@ bool HGridCellBase::draw(QPainter* painter, int nRow, int nCol, QRect rect, bool
         painter->save();
         if (bHiliteFixed)
         {
-            QBrush brush((QColor("#FDB759")));
+            QBrush brush((QColor("#D2D2D2")));
             painter->fillRect(rect,brush);
 
         }
@@ -254,10 +279,10 @@ bool HGridCellBase::draw(QPainter* painter, int nRow, int nCol, QRect rect, bool
     }
 
     rect.adjust(margin(),0,-margin(),0);
-
+    //rectText.adjust(0,-1,-2,-2);
     textRect(rect);
     painter->setFont(font());
-    painter->drawText(rect,format()|QDT_NOPREFIX,text());
+    painter->drawText(rectText,format()|QDT_NOPREFIX,text());
     painter->restore();
     return true;
 }
@@ -311,7 +336,6 @@ QSize HGridCellBase::cellExtent(const QRect& rect)
     QSize imageSize(0,0);
     if (image() >= 0)
     {
-
        HGridCtrl* pGrid = grid();
        Q_ASSERT(pGrid);
        QImageList* pImageList = pGrid->imageList();
